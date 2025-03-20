@@ -34,7 +34,7 @@ This project is **not open for contributions**, as it is part of my thesis resea
 
 ## 📅 Roadmap
 
-No strict roadmap—development will proceed iteratively as the project evolves.
+No strict road-map—development will proceed iteratively as the project evolves.
 
 ## 📸 Future Enhancements
 
