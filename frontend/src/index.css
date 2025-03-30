@@ -1,35 +1,88 @@
-* {
-    box-sizing: border-box;
-}
-
-:root {
-    min-height: 100vh;
-    font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
-    font-size: 16px;
-    line-height: 24px;
-    font-weight: 400;
-    background-image: radial-gradient(ellipse at top left, #7f50e4, #4c05d0);
-    font-synthesis: none;
-    text-rendering: optimizeLegibility;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    -webkit-text-size-adjust: 100%;
-}
-
+html,
 body {
     margin: 0;
-    text-align: center;
-    color: #e6ddf9;
+    padding: 0;
+    height: 100%;
+    background-image: radial-gradient(ellipse at top left, #292f56, #69b330);
+    background-repeat: no-repeat;
+    background-size: cover;
+    font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
 }
 
 .home {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    margin-top: 4rem;
+    min-height: 100vh;
 }
 
-button {
+.top-bar {
+    background-color: #111;
+    padding: 1rem;
+}
+
+.logo {
+    color: #fff;
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+.hero {
+    margin-bottom: 2rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 2rem 1rem;
+    color: #fff;
+}
+
+.hero-content {
+    background-color: rgba(0, 0, 0, 0.5);
+    padding: 2rem;
+    border-radius: 8px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.hero h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.hero p {
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+}
+
+.hero button {
+    margin-top: 2rem;
+    background-color: #55c2da;
+    color: #000;
+    padding: 0.75rem 1.5rem;
+    font-size: 1.2rem;
     cursor: pointer;
-    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 4px;
+    transition: background-color 0.2s, transform 0.2s;
+}
+
+.hero button:hover {
+    background-color: #47a8c4;
+    transform: translateY(-2px);
+}
+
+.description {
+    background-color: #0000006b;
+    text-align: center;
+    padding: 1.5rem 1rem;
+}
+
+.description p {
+    border-radius: 8px;
+    max-width: 600px;
+    margin: 0 auto;
+    color: #fff;
+    line-height: 1.4;
 }
