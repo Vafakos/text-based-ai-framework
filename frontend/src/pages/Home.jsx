@@ -1,4 +1,8 @@
+import { useNavigate } from "react-router";
+
 export default function Home() {
+    let navigate = useNavigate();
+
     return (
         <div className="home">
             <header className="top-bar">
@@ -10,9 +14,7 @@ export default function Home() {
                     <h1>Text-Based AI Framework</h1>
                     <p>Craft your experience, share your stories.</p>
                 </div>
-                <button onClick={() => alert("Navigate to Play Page!")}>
-                    Create your adventure
-                </button>
+                <button onClick={() => navigate("/form")}>Create your adventure</button>
             </section>
 
             <section className="description">
