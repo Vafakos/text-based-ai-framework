@@ -1,14 +1,11 @@
 import { useNavigate } from "react-router";
+import "../styles/Home.css";
 
 export default function Home() {
     let navigate = useNavigate();
 
     return (
         <div className="home">
-            <header className="top-bar">
-                <div className="logo">Text-Based AI Framework</div>
-            </header>
-
             <section className="hero">
                 <div className="hero-content">
                     <h1>Text-Based AI Framework</h1>

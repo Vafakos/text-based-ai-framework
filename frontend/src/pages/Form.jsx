@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import "../styles/Form.css";
 
 export default function Form() {
@@ -13,7 +13,7 @@ export default function Form() {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        console.log(
+        const formData = {
             gameTitle,
             genre,
             setting,
@@ -21,9 +21,10 @@ export default function Form() {
             mainCharacter,
             goal,
             puzzlesEnabled,
-            npcEnabled
-        );
-        // Add your form submission logic here (e.g. save or send to AI)
+            npcEnabled,
+        };
+        console.log("Form submitted:", formData);
+        // Add form handling logic here
     };
 
     const handleReset = () => {
@@ -39,14 +40,13 @@ export default function Form() {
 
     return (
         <div className="game-form">
-            <div className="App">
+            <div className="form-container">
                 <h1>Create Your Game</h1>
                 <fieldset>
-                    <form action="#" method="get">
+                    <form onSubmit={handleSubmit}>
                         <label htmlFor="gameTitle">Game Title*</label>
                         <input
                             type="text"
-                            name="gameTitle"
                             id="gameTitle"
                             value={gameTitle}
                             onChange={(e) => setGameTitle(e.target.value)}
@@ -55,12 +55,7 @@ export default function Form() {
                         />
 
                         <label htmlFor="genre">Genre*</label>
-                        <select
-                            name="genre"
-                            id="genre"
-                            value={genre}
-                            onChange={(e) => setGenre(e.target.value)}
-                        >
+                        <select id="genre" value={genre} onChange={(e) => setGenre(e.target.value)}>
                             <option value="Fantasy">Fantasy</option>
                             <option value="Sci-Fi">Sci-Fi</option>
                             <option value="Horror">Horror</option>
@@ -70,10 +65,7 @@ export default function Form() {
 
                         <label htmlFor="setting">Setting*</label>
                         <textarea
-                            name="setting"
                             id="setting"
-                            cols="30"
-                            rows="4"
                             value={setting}
                             onChange={(e) => setSetting(e.target.value)}
                             placeholder="Describe the game world..."
@@ -81,12 +73,7 @@ export default function Form() {
                         ></textarea>
 
                         <label htmlFor="tone">Tone*</label>
-                        <select
-                            name="tone"
-                            id="tone"
-                            value={tone}
-                            onChange={(e) => setTone(e.target.value)}
-                        >
+                        <select id="tone" value={tone} onChange={(e) => setTone(e.target.value)}>
                             <option value="Serious">Serious</option>
                             <option value="Funny">Funny</option>
                             <option value="Dark">Dark</option>
@@ -96,7 +83,6 @@ export default function Form() {
                         <label htmlFor="mainCharacter">Main Character*</label>
                         <input
                             type="text"
-                            name="mainCharacter"
                             id="mainCharacter"
                             value={mainCharacter}
                             onChange={(e) => setMainCharacter(e.target.value)}
@@ -107,7 +93,6 @@ export default function Form() {
                         <label htmlFor="goal">Goal*</label>
                         <input
                             type="text"
-                            name="goal"
                             id="goal"
                             value={goal}
                             onChange={(e) => setGoal(e.target.value)}
@@ -115,33 +100,32 @@ export default function Form() {
                             required
                         />
 
-                        <label>
+                        <label htmlFor="puzzlesEnabled">
                             <input
+                                id="puzzlesEnabled"
                                 type="checkbox"
-                                name="puzzlesEnabled"
                                 checked={puzzlesEnabled}
                                 onChange={() => setPuzzlesEnabled(!puzzlesEnabled)}
                             />
                             Enable AI-Generated Puzzles
                         </label>
 
-                        <label>
+                        <label htmlFor="npcEnabled">
                             <input
+                                id="npcEnabled"
                                 type="checkbox"
-                                name="npcEnabled"
                                 checked={npcEnabled}
                                 onChange={() => setNpcEnabled(!npcEnabled)}
                             />
                             Enable AI-Generated NPC Dialogues
                         </label>
 
-                        <br />
-                        <button type="reset" value="reset" onClick={handleReset}>
-                            Reset
-                        </button>
-                        <button type="submit" value="Submit" onClick={handleSubmit}>
-                            Submit
-                        </button>
+                        <div className="form-buttons">
+                            <button type="reset" onClick={handleReset}>
+                                Reset
+                            </button>
+                            <button type="submit">Submit</button>
+                        </div>
                     </form>
                 </fieldset>
             </div>
