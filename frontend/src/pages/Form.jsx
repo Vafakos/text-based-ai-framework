@@ -11,7 +11,7 @@ export default function Form() {
     const [puzzlesEnabled, setPuzzlesEnabled] = useState(false);
     const [npcEnabled, setNpcEnabled] = useState(false);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         const formData = {
             gameTitle,
@@ -24,7 +24,21 @@ export default function Form() {
             npcEnabled,
         };
         console.log("Form submitted:", formData);
-        // Add form handling logic here
+        // Here we send the formData to the backend
+        try {
+            const response = await fetch("http://localhost:5000/api/generate-game", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(formData),
+            });
+
+            const result = await response.json();
+            console.log("Response from backend:", result);
+        } catch (err) {
+            console.error("Error sending data to backend:", err);
+        }
     };
 
     const handleReset = () => {
