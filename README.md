@@ -2,6 +2,15 @@
 
 A framework for text-based game developers to create their games with the help of an AI model. This project provides the necessary tools to build interactive text-based experiences powered by AI-driven narratives.
 
+## ⚡ How to Run the Project (Development)
+
+- cd frontend
+- pnpm run dev
+
+- cd backend
+- source .venv/bin/activate
+- python app.py
+
 ## 🚀 Features
 
 -   Enables developers to build **text-based games** with AI assistance.

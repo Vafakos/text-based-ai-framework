@@ -10,6 +10,7 @@ export default function Form() {
     const [goal, setGoal] = useState("");
     const [puzzlesEnabled, setPuzzlesEnabled] = useState(false);
     const [npcEnabled, setNpcEnabled] = useState(false);
+    const [generatedIntro, setGeneratedIntro] = useState("");
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -24,7 +25,7 @@ export default function Form() {
             npcEnabled,
         };
         console.log("Form submitted:", formData);
-        // Here we send the formData to the backend
+
         try {
             const response = await fetch("http://localhost:5000/api/generate-game", {
                 method: "POST",
@@ -35,7 +36,7 @@ export default function Form() {
             });
 
             const result = await response.json();
-            console.log("Response from backend:", result);
+            setGeneratedIntro(result.intro);
         } catch (err) {
             console.error("Error sending data to backend:", err);
         }
@@ -50,6 +51,7 @@ export default function Form() {
         setGoal("");
         setPuzzlesEnabled(false);
         setNpcEnabled(false);
+        setGeneratedIntro(""); // Optionally clear the intro on reset
     };
 
     return (
@@ -142,6 +144,13 @@ export default function Form() {
                         </div>
                     </form>
                 </fieldset>
+
+                {generatedIntro && (
+                    <div className="game-intro">
+                        <h2>Game Intro</h2>
+                        <p>{generatedIntro}</p>
+                    </div>
+                )}
             </div>
         </div>
     );
