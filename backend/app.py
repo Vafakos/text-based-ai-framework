@@ -37,5 +37,21 @@ def generate_outcomes():
     return jsonify({"outcomes": outcomes})
 
 
+@app.route("/api/generate-narrative", methods=["POST"])
+def generate_narrative():
+    data = request.get_json()
+    parent_text = data.get("parentText", "")
+    choice_text = data.get("choiceText", "")
+    outcome_text = data.get("outcomeText", "")
+
+    # TODO: Replace this with a real AI call!
+    narrative = (
+        f"After '{choice_text}', {outcome_text.lower()} "
+        f"(based on the previous scene: {parent_text[:60]}...)"
+    )
+
+    return jsonify({"narrative": narrative})
+
+
 if __name__ == "__main__":
     app.run(debug=True)

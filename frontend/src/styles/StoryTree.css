@@ -121,3 +121,31 @@ h2 {
     background: #32975a;
     transform: translateY(-2px) scale(1.03);
 }
+
+.active-parent-banner {
+    background: #e6f4ea;
+    border-left: 4px solid #60be7b;
+    padding: 0.6rem 1rem;
+    margin-bottom: 1.2rem;
+    font-weight: 500;
+    color: #24603b;
+    border-radius: 6px;
+    font-size: 1rem;
+}
+
+.ai-suggest-narrative-btn {
+    background: #ffe066;
+    color: #4e4e24;
+    border: none;
+    border-radius: 6px;
+    padding: 0.5rem 1.3rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 0.6rem;
+    box-shadow: 0 2px 6px rgba(255, 224, 102, 0.13);
+    transition: background 0.2s;
+}
+.ai-suggest-narrative-btn:hover {
+    background: #ffd43b;
+}
