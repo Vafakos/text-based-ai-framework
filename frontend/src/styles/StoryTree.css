@@ -1,0 +1,29 @@
+/* StoryTree.css */
+
+.story-tree {
+    max-width: 700px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 4px 32px rgba(0, 0, 0, 0.1);
+    font-family: "Segoe UI", sans-serif;
+}
+
+.intro-block {
+    margin-bottom: 2rem;
+    padding: 1rem;
+    background: #f5f7fa;
+    border-left: 4px solid #3e8ed0;
+    border-radius: 8px;
+}
+
+h1 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+}
+
+h2 {
+    margin: 0 0 1rem 0;
+    color: #35639c;
+}

@@ -2,7 +2,7 @@ import { useNavigate } from "react-router";
 import "../styles/Home.css";
 
 export default function Home() {
-    let navigate = useNavigate();
+    const navigate = useNavigate();
 
     return (
         <div className="home">

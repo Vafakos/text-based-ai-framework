@@ -1,7 +1,9 @@
 import { useState } from "react";
+import { useNavigate } from "react-router";
 import "../styles/Form.css";
 
 export default function Form() {
+    const navigate = useNavigate();
     const [gameTitle, setGameTitle] = useState("");
     const [genre, setGenre] = useState("Fantasy");
     const [setting, setSetting] = useState("");
@@ -36,7 +38,7 @@ export default function Form() {
             });
 
             const result = await response.json();
-            setGeneratedIntro(result.intro);
+            navigate("/story-tree", { state: { intro: result.intro, formData } });
         } catch (err) {
             console.error("Error sending data to backend:", err);
         }
@@ -51,7 +53,7 @@ export default function Form() {
         setGoal("");
         setPuzzlesEnabled(false);
         setNpcEnabled(false);
-        setGeneratedIntro(""); // Optionally clear the intro on reset
+        setGeneratedIntro("");
     };
 
     return (
