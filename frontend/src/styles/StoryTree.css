@@ -27,3 +27,53 @@ h2 {
     margin: 0 0 1rem 0;
     color: #35639c;
 }
+
+.choice-list {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: #f9fafb;
+    border-radius: 8px;
+}
+
+.choice-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.choice-item input[type="text"] {
+    flex: 1;
+    padding: 0.5rem;
+    margin-right: 0.5rem;
+    border-radius: 6px;
+    border: 1px solid #bbb;
+    font-size: 1rem;
+}
+
+.choice-item button {
+    background: #e35d6a;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 0.4rem 1rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.choice-item button:hover {
+    background: #c42c3a;
+}
+
+.add-choice-btn {
+    background: #3e8ed0;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 0.5rem 1.2rem;
+    font-size: 1rem;
+    cursor: pointer;
+    margin-top: 1rem;
+    transition: background 0.2s;
+}
+.add-choice-btn:hover {
+    background: #215a8e;
+}
