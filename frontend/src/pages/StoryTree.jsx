@@ -80,8 +80,7 @@ export default function StoryTree() {
                     + Add Choice
                 </button>
                 <button
-                    className="add-choice-btn"
-                    style={{ marginBottom: "1rem" }}
+                    className="ai-assist-btn"
                     onClick={async () => {
                         const choiceTexts = choices.filter((c) => c.text.trim()).map((c) => c.text);
 
@@ -111,7 +110,7 @@ export default function StoryTree() {
                         );
                     }}
                 >
-                    AI Assist: Generate Outcomes
+                    🪄 AI Assist: Generate Outcomes
                 </button>
             </div>
         </div>
