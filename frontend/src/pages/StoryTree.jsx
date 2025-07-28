@@ -8,6 +8,11 @@ export default function StoryTree() {
 
     const { intro, formData } = location.state || {};
 
+    const [storyData, setStoryData] = useState({
+        scenes: {},
+        startSceneId: "scene-1",
+    });
+
     const [choices, setChoices] = useState([
         { id: 1, text: "", outcome: "" },
         { id: 2, text: "", outcome: "" },
@@ -71,47 +76,98 @@ export default function StoryTree() {
                         />
                     </div>
                 ))}
-                <button
-                    className="add-choice-btn"
-                    onClick={() =>
-                        setChoices([...choices, { id: Date.now(), text: "", outcome: "" }])
-                    }
-                >
-                    + Add Choice
-                </button>
-                <button
-                    className="ai-assist-btn"
-                    onClick={async () => {
-                        const choiceTexts = choices.filter((c) => c.text.trim()).map((c) => c.text);
-
-                        if (!intro || choiceTexts.length === 0) {
-                            alert("Please enter the scene intro and at least one choice.");
-                            return;
+                <div className="storytree-actions">
+                    <button
+                        className="add-choice-btn"
+                        onClick={() =>
+                            setChoices([...choices, { id: Date.now(), text: "", outcome: "" }])
                         }
+                    >
+                        + Add Choice
+                    </button>
+                    <button
+                        className="ai-assist-btn"
+                        onClick={async () => {
+                            const choiceTexts = choices
+                                .filter((c) => c.text.trim())
+                                .map((c) => c.text);
 
-                        // TODO: This calls the mock AI endpoint. Update the backend to use a real LLM later.
-                        const response = await fetch(
-                            "http://localhost:5000/api/generate-outcomes",
-                            {
-                                method: "POST",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({ scene: intro, choices: choiceTexts }),
+                            if (!intro || choiceTexts.length === 0) {
+                                alert("Please enter the scene intro and at least one choice.");
+                                return;
                             }
-                        );
 
-                        const data = await response.json();
+                            // TODO: This calls the mock AI endpoint. Update the backend to use a real LLM later.
+                            const response = await fetch(
+                                "http://localhost:5000/api/generate-outcomes",
+                                {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ scene: intro, choices: choiceTexts }),
+                                }
+                            );
 
-                        // TODO: Update the outcome fields with AI responses
-                        setChoices(
-                            choices.map((choice, idx) => ({
-                                ...choice,
-                                outcome: data.outcomes[idx] || choice.outcome,
-                            }))
-                        );
-                    }}
-                >
-                    🪄 AI Assist: Generate Outcomes
-                </button>
+                            const data = await response.json();
+
+                            // TODO: Update the outcome fields with AI responses
+                            setChoices(
+                                choices.map((choice, idx) => ({
+                                    ...choice,
+                                    outcome: data.outcomes[idx] || choice.outcome,
+                                }))
+                            );
+                        }}
+                    >
+                        🪄 AI Assist: Generate Outcomes
+                    </button>
+                    <button
+                        className="save-scene-btn"
+                        style={{ marginTop: "1.5rem" }}
+                        onClick={() => {
+                            const sceneId = "scene-" + (Object.keys(storyData.scenes).length + 1);
+                            setStoryData((prev) => ({
+                                ...prev,
+                                scenes: {
+                                    ...prev.scenes,
+                                    [sceneId]: {
+                                        id: sceneId,
+                                        text: intro,
+                                        choices: choices.map((c) => ({
+                                            text: c.text,
+                                            outcome: c.outcome,
+                                            nextSceneId: null, // TODO: wire this in the future
+                                        })),
+                                    },
+                                },
+                            }));
+                            alert(
+                                "Scene saved! Story now has " +
+                                    (Object.keys(storyData.scenes).length + 1) +
+                                    " scenes."
+                            );
+                            // Optionally: Reset choices, clear outcome fields, or go to the next scene
+                        }}
+                    >
+                        Save Scene
+                    </button>
+                </div>
+            </div>
+            <div className="story-summary">
+                <h3>Saved Scenes</h3>
+                <ul>
+                    {Object.values(storyData.scenes).map((scene) => (
+                        <li key={scene.id}>
+                            <b>{scene.id}:</b> {scene.text.slice(0, 60)}...
+                            <ul>
+                                {scene.choices.map((choice, idx) => (
+                                    <li key={idx}>
+                                        <i>{choice.text}</i> → {choice.outcome.slice(0, 40)}...
+                                    </li>
+                                ))}
+                            </ul>
+                        </li>
+                    ))}
+                </ul>
             </div>
         </div>
     );
