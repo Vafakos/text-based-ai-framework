@@ -133,6 +133,17 @@ h2 {
     font-size: 1rem;
 }
 
+.current-scene-banner {
+    background: #eef3ff;
+    border-left: 4px solid #4f6bdc;
+    padding: 0.6rem 1rem;
+    margin-bottom: 1.2rem;
+    font-weight: 500;
+    color: #27346b;
+    border-radius: 6px;
+    font-size: 1rem;
+}
+
 .ai-suggest-narrative-btn {
     background: #ffe066;
     color: #4e4e24;

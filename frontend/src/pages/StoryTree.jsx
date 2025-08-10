@@ -10,7 +10,9 @@ export default function StoryTree() {
     const [sceneIntro, setSceneIntro] = useState(intro);
     const [hasSavedRootScene, setHasSavedRootScene] = useState(false);
 
-    const [activeParent, setActiveParent] = useState(null); // { sceneId, choiceIdx }
+    const [activeParent, setActiveParent] = useState(null);
+
+    const [currentSceneId, setCurrentSceneId] = useState(null);
 
     const [storyData, setStoryData] = useState({
         scenes: {},
@@ -18,8 +20,8 @@ export default function StoryTree() {
     });
 
     const [choices, setChoices] = useState([
-        { id: 1, text: "", outcome: "" },
-        { id: 2, text: "", outcome: "" },
+        { id: 1, text: "", outcome: "", nextSceneId: null },
+        { id: 2, text: "", outcome: "", nextSceneId: null },
     ]);
 
     if (!intro || !formData) {
@@ -31,36 +33,159 @@ export default function StoryTree() {
         );
     }
 
+    function nextSceneIdValue(prevScenes) {
+        return "scene-" + (Object.keys(prevScenes).length + 1);
+    }
+
     function handleExpandBranch(parentSceneId, choiceIdx) {
         setActiveParent({ sceneId: parentSceneId, choiceIdx });
+        setCurrentSceneId(null);
         setSceneIntro("");
         setChoices([
-            { id: 1, text: "", outcome: "" },
-            { id: 2, text: "", outcome: "" },
+            { id: 1, text: "", outcome: "", nextSceneId: null },
+            { id: 2, text: "", outcome: "", nextSceneId: null },
         ]);
     }
 
-    let activeParentBanner = null;
+    function handleEditScene(sceneId) {
+        const s = storyData.scenes[sceneId];
+        if (!s) return;
+        setActiveParent(null);
+        setCurrentSceneId(sceneId);
+        setSceneIntro(s.text);
+        setChoices(
+            s.choices.map((c, i) => ({
+                id: Date.now() + i,
+                text: c.text,
+                outcome: c.outcome,
+                nextSceneId: c.nextSceneId ?? null,
+            }))
+        );
+    }
+
+    // banner text for context
+    let banner = null;
     if (activeParent && storyData.scenes[activeParent.sceneId]) {
         const parent = storyData.scenes[activeParent.sceneId];
         const parentChoice = parent.choices[activeParent.choiceIdx];
-        activeParentBanner = (
+        banner = (
             <div className="active-parent-banner">
                 🌳 You are creating a new scene as the result of <b>{activeParent.sceneId}</b>,
                 choice {activeParent.choiceIdx + 1}: "{parentChoice.text}"
             </div>
         );
+    } else if (currentSceneId) {
+        banner = (
+            <div className="current-scene-banner">
+                ✏️ <strong>Currently Editing:</strong> {currentSceneId}
+            </div>
+        );
+    } else if (!hasSavedRootScene) {
+        banner = (
+            <div className="current-scene-banner">
+                🌱 <strong>Currently Editing:</strong> Root Scene
+            </div>
+        );
     }
 
-    const showEditor = !hasSavedRootScene || activeParent;
+    const showEditor = !hasSavedRootScene || !!activeParent || !!currentSceneId;
+
+    async function handleSaveScene() {
+        if (!sceneIntro.trim()) {
+            alert("Scene narrative cannot be empty.");
+            return;
+        }
+        const nonEmptyChoices = choices.filter((c) => c.text.trim());
+        if (nonEmptyChoices.length === 0) {
+            alert("Please add at least one choice with text.");
+            return;
+        }
+
+        // EDIT existing scene
+        if (currentSceneId && storyData.scenes[currentSceneId]) {
+            setStoryData((prev) => ({
+                ...prev,
+                scenes: {
+                    ...prev.scenes,
+                    [currentSceneId]: {
+                        ...prev.scenes[currentSceneId],
+                        text: sceneIntro,
+                        choices: choices.map((c) => ({
+                            text: c.text,
+                            outcome: c.outcome,
+                            nextSceneId: c.nextSceneId ?? null,
+                        })),
+                    },
+                },
+            }));
+            alert("Scene updated!");
+            return;
+        }
+
+        // CREATE new scene (root or child)
+        setStoryData((prev) => {
+            const sceneId = nextSceneIdValue(prev.scenes);
+            const newScene = {
+                id: sceneId,
+                text: sceneIntro,
+                choices: choices.map((c) => ({
+                    text: c.text,
+                    outcome: c.outcome,
+                    nextSceneId: null,
+                })),
+            };
+
+            if (activeParent) {
+                const parent = { ...prev.scenes[activeParent.sceneId] };
+                parent.choices = parent.choices.map((c, i) =>
+                    i === activeParent.choiceIdx ? { ...c, nextSceneId: sceneId } : c
+                );
+                const updated = {
+                    ...prev,
+                    scenes: {
+                        ...prev.scenes,
+                        [activeParent.sceneId]: parent,
+                        [sceneId]: newScene,
+                    },
+                };
+                return updated;
+            }
+
+            // root scene
+            const updated = {
+                ...prev,
+                scenes: {
+                    ...prev.scenes,
+                    [sceneId]: newScene,
+                },
+            };
+            return updated;
+        });
+
+        if (activeParent) {
+            setActiveParent(null);
+            alert("Child scene created and linked!");
+        } else {
+            setHasSavedRootScene(true);
+            setCurrentSceneId(null);
+            alert("Root scene saved!");
+        }
+
+        setSceneIntro("");
+        setChoices([
+            { id: 1, text: "", outcome: "", nextSceneId: null },
+            { id: 2, text: "", outcome: "", nextSceneId: null },
+        ]);
+    }
 
     return (
         <div className="story-tree">
             <h1>Story Tree Editor</h1>
 
+            {banner}
+
             {showEditor ? (
                 <>
-                    {activeParentBanner}
                     <div className="intro-block">
                         <h2>Scene Narrative</h2>
                         {activeParent && (
@@ -68,14 +193,13 @@ export default function StoryTree() {
                                 className="ai-suggest-narrative-btn"
                                 style={{ marginBottom: "0.5rem" }}
                                 onClick={async () => {
-                                    // Get parent scene and choice info
                                     const parentScene = storyData.scenes[activeParent.sceneId];
                                     const choiceText =
                                         parentScene.choices[activeParent.choiceIdx].text;
                                     const choiceOutcome =
                                         parentScene.choices[activeParent.choiceIdx].outcome;
 
-                                    // Call backend for AI narrative suggestion
+                                    // TODO: replace mock with real LLM later
                                     const response = await fetch(
                                         "http://localhost:5000/api/generate-narrative",
                                         {
@@ -89,7 +213,7 @@ export default function StoryTree() {
                                         }
                                     );
                                     const data = await response.json();
-                                    setSceneIntro(data.narrative); // Set the AI-generated narrative
+                                    setSceneIntro(data.narrative);
                                 }}
                             >
                                 🪄 AI: Suggest Scene Narrative
@@ -128,7 +252,7 @@ export default function StoryTree() {
                                         onClick={() => {
                                             setChoices(choices.filter((c, i) => i !== idx));
                                         }}
-                                        disabled={choices.length <= 2}
+                                        disabled={choices.length <= 1}
                                     >
                                         Remove
                                     </button>
@@ -146,18 +270,25 @@ export default function StoryTree() {
                                 />
                             </div>
                         ))}
+
                         <div className="storytree-actions">
                             <button
                                 className="add-choice-btn"
                                 onClick={() =>
                                     setChoices([
                                         ...choices,
-                                        { id: Date.now(), text: "", outcome: "" },
+                                        {
+                                            id: Date.now(),
+                                            text: "",
+                                            outcome: "",
+                                            nextSceneId: null,
+                                        },
                                     ])
                                 }
                             >
                                 + Add Choice
                             </button>
+
                             <button
                                 className="ai-assist-btn"
                                 onClick={async () => {
@@ -167,12 +298,12 @@ export default function StoryTree() {
 
                                     if (!sceneIntro || choiceTexts.length === 0) {
                                         alert(
-                                            "Please enter the scene intro and at least one choice."
+                                            "Please enter the scene narrative and at least one choice."
                                         );
                                         return;
                                     }
 
-                                    // TODO: This calls the mock AI endpoint. Update the backend to use a real LLM later.
+                                    // TODO: replace mock with real LLM later
                                     const response = await fetch(
                                         "http://localhost:5000/api/generate-outcomes",
                                         {
@@ -184,10 +315,8 @@ export default function StoryTree() {
                                             }),
                                         }
                                     );
-
                                     const data = await response.json();
 
-                                    // TODO: Update the outcome fields with AI responses
                                     setChoices(
                                         choices.map((choice, idx) => ({
                                             ...choice,
@@ -198,72 +327,20 @@ export default function StoryTree() {
                             >
                                 🪄 AI Assist: Generate Outcomes
                             </button>
+
                             <button
                                 className="save-scene-btn"
                                 style={{ marginTop: "1.5rem" }}
-                                onClick={() => {
-                                    const sceneId =
-                                        "scene-" + (Object.keys(storyData.scenes).length + 1);
-                                    const newScene = {
-                                        id: sceneId,
-                                        text: sceneIntro,
-                                        choices: choices.map((c) => ({
-                                            text: c.text,
-                                            outcome: c.outcome,
-                                            nextSceneId: null,
-                                        })),
-                                    };
-
-                                    if (activeParent) {
-                                        setStoryData((prev) => {
-                                            const parent = { ...prev.scenes[activeParent.sceneId] };
-                                            parent.choices = parent.choices.map((c, i) =>
-                                                i === activeParent.choiceIdx
-                                                    ? { ...c, nextSceneId: sceneId }
-                                                    : c
-                                            );
-                                            return {
-                                                ...prev,
-                                                scenes: {
-                                                    ...prev.scenes,
-                                                    [activeParent.sceneId]: parent,
-                                                    [sceneId]: newScene,
-                                                },
-                                            };
-                                        });
-                                        setActiveParent(null);
-                                    } else {
-                                        setStoryData((prev) => ({
-                                            ...prev,
-                                            scenes: {
-                                                ...prev.scenes,
-                                                [sceneId]: newScene,
-                                            },
-                                        }));
-                                        setHasSavedRootScene(true);
-                                    }
-
-                                    alert(
-                                        "Scene saved! Story now has " +
-                                            (Object.keys(storyData.scenes).length + 1) +
-                                            " scenes."
-                                    );
-
-                                    setSceneIntro("");
-                                    setChoices([
-                                        { id: 1, text: "", outcome: "" },
-                                        { id: 2, text: "", outcome: "" },
-                                    ]);
-                                }}
+                                onClick={handleSaveScene}
                             >
-                                Save Scene
+                                💾 Save Scene
                             </button>
                         </div>
                     </div>
                 </>
             ) : (
                 <div style={{ margin: "2rem 0", color: "#888" }}>
-                    Click <b>+ New Scene</b> on a choice below to continue building your story!
+                    Click <b>+ New Scene</b> on a choice below, or ✏️ <b>Edit</b> an existing scene.
                 </div>
             )}
 
@@ -273,11 +350,17 @@ export default function StoryTree() {
                     {Object.values(storyData.scenes).map((scene) => (
                         <li key={scene.id}>
                             <b>{scene.id}:</b> {scene.text.slice(0, 60)}...
+                            <button
+                                style={{ marginLeft: "0.5rem" }}
+                                onClick={() => handleEditScene(scene.id)}
+                            >
+                                ✏️ Edit
+                            </button>
                             <ul>
                                 {scene.choices.map((choice, idx) => (
                                     <li key={idx}>
                                         <i>{choice.text}</i> → {choice.outcome.slice(0, 40)}...
-                                        {!choice.nextSceneId && (
+                                        {!choice.nextSceneId ? (
                                             <button
                                                 className="expand-branch-btn"
                                                 onClick={() => handleExpandBranch(scene.id, idx)}
@@ -285,8 +368,7 @@ export default function StoryTree() {
                                             >
                                                 + New Scene
                                             </button>
-                                        )}
-                                        {choice.nextSceneId && (
+                                        ) : (
                                             <span style={{ color: "#60be7b", marginLeft: "1rem" }}>
                                                 → {choice.nextSceneId}
                                             </span>
