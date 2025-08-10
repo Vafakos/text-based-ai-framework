@@ -33,6 +33,13 @@ export default function StoryTree() {
         );
     }
 
+    const [toast, setToast] = useState(null);
+    function notify(msg, type = "info", ms = 3000) {
+        setToast({ msg, type });
+        window.clearTimeout(notify._t);
+        notify._t = window.setTimeout(() => setToast(null), ms);
+    }
+
     function nextSceneIdValue(prevScenes) {
         return "scene-" + (Object.keys(prevScenes).length + 1);
     }
@@ -92,12 +99,12 @@ export default function StoryTree() {
 
     async function handleSaveScene() {
         if (!sceneIntro.trim()) {
-            alert("Scene narrative cannot be empty.");
+            notify("Scene narrative cannot be empty.", "error");
             return;
         }
         const nonEmptyChoices = choices.filter((c) => c.text.trim());
         if (nonEmptyChoices.length === 0) {
-            alert("Please add at least one choice with text.");
+            notify("Please add at least one choice with text.", "error");
             return;
         }
 
@@ -118,7 +125,7 @@ export default function StoryTree() {
                     },
                 },
             }));
-            alert("Scene updated!");
+            notify("Scene updated!", "success");
             return;
         }
 
@@ -164,11 +171,11 @@ export default function StoryTree() {
 
         if (activeParent) {
             setActiveParent(null);
-            alert("Child scene created and linked!");
+            notify("Child scene created and linked!", "success");
         } else {
             setHasSavedRootScene(true);
             setCurrentSceneId(null);
-            alert("Root scene saved!");
+            notify("Root scene saved!", "success");
         }
 
         setSceneIntro("");
@@ -180,6 +187,12 @@ export default function StoryTree() {
 
     return (
         <div className="story-tree">
+            {toast && (
+                <div className={`toast toast-${toast.type}`} role="status" aria-live="polite">
+                    {toast.msg}
+                </div>
+            )}
+
             <h1>Story Tree Editor</h1>
 
             {banner}
@@ -252,7 +265,13 @@ export default function StoryTree() {
                                         onClick={() => {
                                             setChoices(choices.filter((c, i) => i !== idx));
                                         }}
-                                        disabled={choices.length <= 1}
+                                        disabled={choices.length <= 1 || !!choice.nextSceneId}
+                                        title={
+                                            choice.nextSceneId
+                                                ? "Cannot remove: this choice links to " +
+                                                  choice.nextSceneId
+                                                : ""
+                                        }
                                     >
                                         Remove
                                     </button>
@@ -297,8 +316,9 @@ export default function StoryTree() {
                                         .map((c) => c.text);
 
                                     if (!sceneIntro || choiceTexts.length === 0) {
-                                        alert(
-                                            "Please enter the scene narrative and at least one choice."
+                                        notify(
+                                            "Please enter the scene narrative and at least one choice.",
+                                            "error"
                                         );
                                         return;
                                     }
