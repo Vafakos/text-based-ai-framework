@@ -161,6 +161,23 @@ h2 {
     background: #ffd43b;
 }
 
+.play-btn {
+    background: #6b5b95;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 0.55rem 1.6rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(107, 91, 149, 0.1);
+    transition: background 0.2s, transform 0.1s;
+}
+.play-btn:hover {
+    background: #594a7d;
+    transform: translateY(-2px) scale(1.03);
+}
+
 .toast {
     position: fixed;
     right: 1rem;

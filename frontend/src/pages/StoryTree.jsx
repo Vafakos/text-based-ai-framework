@@ -400,6 +400,15 @@ export default function StoryTree() {
                     ))}
                 </ul>
             </div>
+            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "2rem" }}>
+                <button
+                    className="save-scene-btn"
+                    onClick={() => navigate("/play", { state: { storyData } })}
+                    title="Play from the start scene"
+                >
+                    ▶ Play From Start
+                </button>
+            </div>
         </div>
     );
 }
