@@ -10,8 +10,6 @@ export default function Form() {
     const [tone, setTone] = useState("Serious");
     const [mainCharacter, setMainCharacter] = useState("");
     const [goal, setGoal] = useState("");
-    const [puzzlesEnabled, setPuzzlesEnabled] = useState(false);
-    const [npcEnabled, setNpcEnabled] = useState(false);
     const [generatedIntro, setGeneratedIntro] = useState("");
 
     const handleSubmit = async (e) => {
@@ -23,8 +21,6 @@ export default function Form() {
             tone,
             mainCharacter,
             goal,
-            puzzlesEnabled,
-            npcEnabled,
         };
         console.log("Form submitted:", formData);
 
@@ -52,8 +48,6 @@ export default function Form() {
         setTone("Serious");
         setMainCharacter("");
         setGoal("");
-        setPuzzlesEnabled(false);
-        setNpcEnabled(false);
         setGeneratedIntro("");
     };
 
@@ -118,26 +112,6 @@ export default function Form() {
                             placeholder="e.g. To recover a lost artifact"
                             required
                         />
-
-                        <label htmlFor="puzzlesEnabled">
-                            <input
-                                id="puzzlesEnabled"
-                                type="checkbox"
-                                checked={puzzlesEnabled}
-                                onChange={() => setPuzzlesEnabled(!puzzlesEnabled)}
-                            />
-                            Enable AI-Generated Puzzles
-                        </label>
-
-                        <label htmlFor="npcEnabled">
-                            <input
-                                id="npcEnabled"
-                                type="checkbox"
-                                checked={npcEnabled}
-                                onChange={() => setNpcEnabled(!npcEnabled)}
-                            />
-                            Enable AI-Generated NPC Dialogues
-                        </label>
 
                         <div className="form-buttons">
                             <button type="reset" onClick={handleReset}>
