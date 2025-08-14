@@ -77,3 +77,26 @@ def gen_outcomes(scene_text, choices):
     if len(lines) < len(choices):
         lines += ["[Outcome unavailable]"] * (len(choices) - len(lines))
     return lines[: len(choices)]
+
+
+def gen_narrative(parent_text, choice_text, outcome_text):
+    system_prompt = (
+        "You are an AI that writes the next scene for a branching text-based game.\n"
+        "Rules:\n"
+        "- Write 3–6 sentences.\n"
+        "- Base it on the prior scene, the choice taken, and its immediate outcome.\n"
+        "- Present tense, second person.\n"
+        "- No choices yet — just narrative."
+    )
+    user_prompt = (
+        f"Previous scene:\n{parent_text}\n\n"
+        f"Choice taken: {choice_text}\n"
+        f"Immediate outcome: {outcome_text}"
+    )
+    return _chat(
+        [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ],
+        max_tokens=320,
+    )

@@ -1,5 +1,5 @@
 from dotenv import load_dotenv
-from ai_provider import gen_intro, gen_outcomes
+from ai_provider import gen_intro, gen_outcomes, gen_narrative
 
 load_dotenv()
 
@@ -35,17 +35,12 @@ def generate_outcomes():
 
 @app.route("/api/generate-narrative", methods=["POST"])
 def generate_narrative():
-    data = request.get_json()
-    parent_text = data.get("parentText", "")
-    choice_text = data.get("choiceText", "")
-    outcome_text = data.get("outcomeText", "")
-
-    # TODO: Replace this with a real AI call!
-    narrative = (
-        f"After '{choice_text}', {outcome_text.lower()} "
-        f"(based on the previous scene: {parent_text[:60]}...)"
+    data = request.get_json() or {}
+    narrative = gen_narrative(
+        data.get("parentText", ""),
+        data.get("choiceText", ""),
+        data.get("outcomeText", ""),
     )
-
     return jsonify({"narrative": narrative})
 
 
