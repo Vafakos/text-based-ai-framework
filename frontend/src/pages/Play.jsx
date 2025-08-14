@@ -88,9 +88,11 @@ export default function Play() {
 
     const isEnding = useMemo(() => {
         if (!currentScene) return true;
-        const hasNext = currentScene.choices?.some((c) => !!c.nextSceneId);
-        return !hasNext;
-    }, [currentScene]);
+        const hasValidNext = currentScene.choices?.some(
+            (c) => c.nextSceneId && storyData.scenes?.[c.nextSceneId]
+        );
+        return !hasValidNext;
+    }, [currentScene, storyData.scenes]);
 
     const breadcrumbIds = useMemo(() => history.map((h) => h.sceneId), [history]);
 
@@ -102,21 +104,23 @@ export default function Play() {
 
             <BreadcrumbTrail ids={breadcrumbIds} onJump={jumpTo} />
 
+            <div className="intro-block">
+                <h2>{currentSceneId}</h2>
+                <p style={{ whiteSpace: "pre-wrap" }}>
+                    {currentScene?.text || "The story continues..."}
+                </p>
+            </div>
+
             {!isEnding ? (
                 <>
-                    <div className="intro-block">
-                        <h2>{currentSceneId}</h2>
-                        <p style={{ whiteSpace: "pre-wrap" }}>
-                            {currentScene?.text || "The story continues..."}
-                        </p>
-                    </div>
-
                     <div className="choice-list">
                         <h3>What do you do?</h3>
                         <div style={{ display: "grid", gap: "0.75rem" }}>
                             {(currentScene?.choices || [])
                                 .filter((c) => c.text?.trim())
                                 .map((c, idx) => {
+                                    const targetExists =
+                                        !!c.nextSceneId && storyData.scenes?.[c.nextSceneId];
                                     const leadsToVisited =
                                         !!c.nextSceneId && visited.has(c.nextSceneId);
                                     return (
@@ -125,11 +129,15 @@ export default function Play() {
                                             className={`add-choice-btn ${
                                                 leadsToVisited ? "visited-choice" : ""
                                             }`}
-                                            onClick={() => choose({ ...c, id: String(idx) })}
-                                            disabled={!c.nextSceneId}
+                                            onClick={() =>
+                                                targetExists && choose({ ...c, id: String(idx) })
+                                            }
+                                            disabled={!targetExists}
                                             title={
-                                                !c.nextSceneId
-                                                    ? "This path has no next scene yet"
+                                                !targetExists
+                                                    ? c.nextSceneId
+                                                        ? `Target scene "${c.nextSceneId}" doesn't exist`
+                                                        : "This path has no next scene yet"
                                                     : leadsToVisited
                                                     ? "You've been here before"
                                                     : ""
