@@ -64,6 +64,18 @@ export default function StoryTree() {
         reader.readAsText(file);
     }
 
+    function resetEditorToBlank() {
+        setActiveParent(null);
+        setCurrentSceneId(null);
+        setHasSavedRootScene(false);
+        setSceneIntro(intro || "");
+        setChoices([
+            { id: 1, text: "", outcome: "", nextSceneId: null },
+            { id: 2, text: "", outcome: "", nextSceneId: null },
+        ]);
+        setStoryData({ scenes: {}, startSceneId: "scene-1" });
+    }
+
     useEffect(() => {
         try {
             const raw = localStorage.getItem(AUTOSAVE_KEY);
@@ -97,15 +109,6 @@ export default function StoryTree() {
         { id: 1, text: "", outcome: "", nextSceneId: null },
         { id: 2, text: "", outcome: "", nextSceneId: null },
     ]);
-
-    if (!intro || !formData) {
-        return (
-            <div>
-                <p>Invalid access. Please start by creating a game.</p>
-                <button onClick={() => navigate("/form")}>Go to Form</button>
-            </div>
-        );
-    }
 
     const [toast, setToast] = useState(null);
     function notify(msg, type = "info", ms = 3000) {
@@ -472,7 +475,8 @@ export default function StoryTree() {
                     className="save-scene-btn"
                     onClick={() => {
                         localStorage.removeItem(AUTOSAVE_KEY);
-                        if (typeof notify === "function") notify("Autosave cleared.", "info");
+                        resetEditorToBlank();
+                        notify("Autosave cleared.", "info");
                     }}
                 >
                     🧹 Clear Autosave
