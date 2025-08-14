@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router";
-import { useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import "../styles/StoryTree.css";
 
 export default function StoryTree() {
@@ -18,6 +18,80 @@ export default function StoryTree() {
         scenes: {},
         startSceneId: "scene-1",
     });
+
+    const AUTOSAVE_KEY = "tbg_storyData_v1";
+    const saveDebounceRef = useRef();
+    const fileInputRef = useRef(null);
+
+    function exportStoryToFile(data) {
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${data.title || "story"}-story.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    function handleImportFile(file) {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onerror = () => {
+            if (typeof notify === "function") notify("Failed to read file.", "error");
+        };
+        reader.onload = () => {
+            try {
+                const parsed = JSON.parse(reader.result);
+                if (!parsed?.scenes) {
+                    if (typeof notify === "function") notify("No scenes found in JSON.", "error");
+                    return;
+                }
+                setStoryData(parsed);
+                setHasSavedRootScene(Object.keys(parsed.scenes).length > 0);
+                setActiveParent(null);
+                setCurrentSceneId(null);
+                setSceneIntro("");
+                setChoices([
+                    { id: 1, text: "", outcome: "", nextSceneId: null },
+                    { id: 2, text: "", outcome: "", nextSceneId: null },
+                ]);
+                if (typeof notify === "function") notify("Story imported.", "success");
+            } catch (e) {
+                if (typeof notify === "function") notify("Invalid JSON file.", "error");
+                console.error(e);
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    useEffect(() => {
+        try {
+            const raw = localStorage.getItem(AUTOSAVE_KEY);
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                if (parsed && parsed.scenes && Object.keys(parsed.scenes).length > 0) {
+                    setStoryData(parsed);
+                    setHasSavedRootScene(true);
+                    if (typeof notify === "function") notify("Autosave loaded.", "info");
+                }
+            }
+        } catch (e) {
+            console.error("Failed to load autosave:", e);
+        }
+    }, []);
+
+    useEffect(() => {
+        window.clearTimeout(saveDebounceRef.current);
+        saveDebounceRef.current = window.setTimeout(() => {
+            try {
+                localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(storyData));
+            } catch (e) {
+                console.error("Failed to save autosave:", e);
+            }
+        }, 300);
+
+        return () => window.clearTimeout(saveDebounceRef.current);
+    }, [storyData]);
 
     const [choices, setChoices] = useState([
         { id: 1, text: "", outcome: "", nextSceneId: null },
@@ -363,6 +437,47 @@ export default function StoryTree() {
                     Click <b>+ New Scene</b> on a choice below, or ✏️ <b>Edit</b> an existing scene.
                 </div>
             )}
+            <div
+                className="storytree-actions"
+                style={{ justifyContent: "flex-start", marginTop: 0 }}
+            >
+                <button
+                    className="add-choice-btn"
+                    onClick={() => exportStoryToFile(storyData)}
+                    title="Download your story as JSON"
+                >
+                    ⬇️ Export JSON
+                </button>
+
+                <button
+                    className="add-choice-btn"
+                    onClick={() => fileInputRef.current?.click()}
+                    title="Load a story JSON file"
+                >
+                    ⬆️ Import JSON
+                </button>
+                <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="application/json"
+                    style={{ display: "none" }}
+                    onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        handleImportFile(file);
+                        e.target.value = "";
+                    }}
+                />
+
+                <button
+                    className="save-scene-btn"
+                    onClick={() => {
+                        localStorage.removeItem(AUTOSAVE_KEY);
+                        if (typeof notify === "function") notify("Autosave cleared.", "info");
+                    }}
+                >
+                    🧹 Clear Autosave
+                </button>
+            </div>
 
             <div className="story-summary">
                 <h3>Saved Scenes</h3>

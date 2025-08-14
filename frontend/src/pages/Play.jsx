@@ -5,7 +5,16 @@ import "../styles/StoryTree.css";
 export default function Play() {
     const location = useLocation();
     const navigate = useNavigate();
-    const storyData = location.state?.storyData;
+    const storyData =
+        location.state?.storyData ||
+        (() => {
+            try {
+                const raw = localStorage.getItem("tbg_storyData_v1");
+                return raw ? JSON.parse(raw) : null;
+            } catch {
+                return null;
+            }
+        })();
 
     const startSceneId = storyData?.startSceneId || "scene-1";
     const [sceneId, setSceneId] = useState(startSceneId);
