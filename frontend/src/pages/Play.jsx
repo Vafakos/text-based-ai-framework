@@ -1,10 +1,11 @@
 import { useLocation, useNavigate } from "react-router";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback, useEffect } from "react";
 import "../styles/StoryTree.css";
 
 export default function Play() {
     const location = useLocation();
     const navigate = useNavigate();
+
     const storyData =
         location.state?.storyData ||
         (() => {
@@ -16,10 +17,6 @@ export default function Play() {
             }
         })();
 
-    const startSceneId = storyData?.startSceneId || "scene-1";
-    const [sceneId, setSceneId] = useState(startSceneId);
-    const currentScene = useMemo(() => storyData?.scenes?.[sceneId], [storyData, sceneId]);
-
     if (!storyData || !storyData.scenes || Object.keys(storyData.scenes).length === 0) {
         return (
             <div className="story-tree" style={{ textAlign: "center" }}>
@@ -30,55 +27,200 @@ export default function Play() {
         );
     }
 
-    const isEnding =
-        !currentScene || !currentScene.choices || currentScene.choices.every((c) => !c.nextSceneId);
+    const startSceneId = storyData.startSceneId || "scene-1";
+    const [history, setHistory] = useState([{ sceneId: startSceneId }]);
+    const [visited, setVisited] = useState(() => new Set([startSceneId]));
+
+    const totalScenes = useMemo(() => Object.keys(storyData.scenes).length, [storyData.scenes]);
+
+    const currentSceneId = history[history.length - 1]?.sceneId;
+    const currentScene = useMemo(
+        () => storyData.scenes?.[currentSceneId],
+        [storyData, currentSceneId]
+    );
+
+    useEffect(() => {
+        if (currentSceneId && !visited.has(currentSceneId)) {
+            setVisited((prev) => {
+                const next = new Set(prev);
+                next.add(currentSceneId);
+                return next;
+            });
+        }
+    }, [currentSceneId]);
+
+    const canGoBack = history.length > 1;
+
+    const goBack = useCallback(() => {
+        setHistory((h) => (h.length > 1 ? h.slice(0, -1) : h));
+    }, []);
+
+    const restart = useCallback(() => {
+        setHistory([{ sceneId: startSceneId }]);
+        setVisited(new Set([startSceneId]));
+    }, [startSceneId]);
+
+    const choose = useCallback(
+        (choice) => {
+            if (!choice) return;
+            if (choice.nextSceneId) {
+                setHistory((h) => [...h, { sceneId: choice.nextSceneId, choiceId: choice.id }]);
+            } else {
+                setHistory((h) => [...h, { sceneId: currentSceneId, choiceId: choice.id }]);
+            }
+        },
+        [currentSceneId]
+    );
+
+    const jumpTo = useCallback(
+        (index) => {
+            if (index < 0 || index >= history.length) return;
+            const delta = history.length - 1 - index;
+            for (let i = 0; i < delta; i++) goBack();
+        },
+        [history.length, goBack]
+    );
+
+    const progress = useMemo(() => {
+        if (!totalScenes) return 0;
+        return Math.min(1, visited.size / totalScenes);
+    }, [visited.size, totalScenes]);
+
+    const isEnding = useMemo(() => {
+        if (!currentScene) return true;
+        const hasNext = currentScene.choices?.some((c) => !!c.nextSceneId);
+        return !hasNext;
+    }, [currentScene]);
+
+    const breadcrumbIds = useMemo(() => history.map((h) => h.sceneId), [history]);
 
     return (
         <div className="story-tree">
             <h1>Play</h1>
 
-            <div className="intro-block">
-                <h2>{sceneId}</h2>
-                <p style={{ whiteSpace: "pre-wrap" }}>
-                    {currentScene?.text || "The story ends here."}
-                </p>
-            </div>
+            <ProgressBar value={progress} />
+
+            <BreadcrumbTrail ids={breadcrumbIds} onJump={jumpTo} />
 
             {!isEnding ? (
-                <div className="choice-list">
-                    <h3>What do you do?</h3>
-                    <div style={{ display: "grid", gap: "0.75rem" }}>
-                        {currentScene.choices
-                            .filter((c) => c.text?.trim())
-                            .map((c, idx) => (
-                                <button
-                                    key={idx}
-                                    className="add-choice-btn"
-                                    onClick={() => {
-                                        if (c.nextSceneId) setSceneId(c.nextSceneId);
-                                    }}
-                                    disabled={!c.nextSceneId}
-                                    title={!c.nextSceneId ? "This path has no next scene yet" : ""}
-                                >
-                                    {c.text}
-                                </button>
-                            ))}
+                <>
+                    <div className="intro-block">
+                        <h2>{currentSceneId}</h2>
+                        <p style={{ whiteSpace: "pre-wrap" }}>
+                            {currentScene?.text || "The story continues..."}
+                        </p>
                     </div>
-                </div>
+
+                    <div className="choice-list">
+                        <h3>What do you do?</h3>
+                        <div style={{ display: "grid", gap: "0.75rem" }}>
+                            {(currentScene?.choices || [])
+                                .filter((c) => c.text?.trim())
+                                .map((c, idx) => {
+                                    const leadsToVisited =
+                                        !!c.nextSceneId && visited.has(c.nextSceneId);
+                                    return (
+                                        <button
+                                            key={idx}
+                                            className={`add-choice-btn ${
+                                                leadsToVisited ? "visited-choice" : ""
+                                            }`}
+                                            onClick={() => choose({ ...c, id: String(idx) })}
+                                            disabled={!c.nextSceneId}
+                                            title={
+                                                !c.nextSceneId
+                                                    ? "This path has no next scene yet"
+                                                    : leadsToVisited
+                                                    ? "You've been here before"
+                                                    : ""
+                                            }
+                                        >
+                                            {c.text}
+                                        </button>
+                                    );
+                                })}
+                        </div>
+                    </div>
+
+                    <div className="storytree-actions" style={{ justifyContent: "space-between" }}>
+                        <button
+                            className="save-scene-btn"
+                            onClick={goBack}
+                            disabled={!canGoBack}
+                            title={canGoBack ? "Go back one step" : "Can't go back"}
+                        >
+                            ← Back
+                        </button>
+                        <button className="add-choice-btn" onClick={() => navigate("/story-tree")}>
+                            ✏️ Back to Editor
+                        </button>
+                    </div>
+                </>
             ) : (
-                <div className="storytree-actions">
-                    <button
-                        className="save-scene-btn"
-                        onClick={() => setSceneId(startSceneId)}
-                        title="Restart from the beginning"
-                    >
-                        ↺ Restart
-                    </button>
-                    <button className="add-choice-btn" onClick={() => navigate("/story-tree")}>
-                        ← Back to Editor
-                    </button>
-                </div>
+                <EndingScreen
+                    stats={{
+                        steps: Math.max(0, history.length - 1),
+                        visitedCount: visited.size,
+                        totalScenes,
+                    }}
+                    onRestart={restart}
+                    onEdit={() => navigate("/story-tree")}
+                />
             )}
+        </div>
+    );
+}
+
+function ProgressBar({ value }) {
+    const pct = Math.round((value || 0) * 100);
+    return (
+        <div className="tbg-progress">
+            <div className="tbg-progress-top">
+                <span>Progress</span>
+                <span>{pct}%</span>
+            </div>
+            <div className="tbg-progress-rail">
+                <div className="tbg-progress-fill" style={{ width: `${pct}%` }} />
+            </div>
+        </div>
+    );
+}
+
+function BreadcrumbTrail({ ids, onJump }) {
+    const compact = ids.filter((id, i) => i === 0 || ids[i - 1] !== id);
+    return (
+        <div className="tbg-breadcrumb">
+            {compact.map((id, idx) => (
+                <button
+                    key={`${id}-${idx}`}
+                    className="tbg-crumb"
+                    onClick={() => onJump(idx)}
+                    title={`Jump to ${id}`}
+                >
+                    {id}
+                    {idx < compact.length - 1 ? " ›" : ""}
+                </button>
+            ))}
+        </div>
+    );
+}
+
+function EndingScreen({ stats, onRestart, onEdit }) {
+    return (
+        <div className="tbg-ending">
+            <h2 className="tbg-ending-title">The End</h2>
+            <p className="tbg-ending-sub">
+                You visited {stats.visitedCount} of {stats.totalScenes} scenes in {stats.steps}{" "}
+                steps.
+            </p>
+            <div className="tbg-ending-actions">
+                <button className="save-scene-btn" onClick={onRestart}>
+                    ↺ Play Again
+                </button>
+                <button className="add-choice-btn" onClick={onEdit}>
+                    ✏️ Back to Editor
+                </button>
+            </div>
         </div>
     );
 }
