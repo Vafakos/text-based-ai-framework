@@ -1,4 +1,5 @@
 from dotenv import load_dotenv
+from ai_provider import gen_intro
 
 load_dotenv()
 
@@ -11,20 +12,15 @@ CORS(app)
 
 @app.route("/api/generate-game", methods=["POST"])
 def generate_game():
-    data = request.get_json()
-    # TODO: Replace this mock intro with AI-powered generation
-    print("Received data from frontend:", data)
-
-    title = data.get("gameTitle", "Unknown Adventure")
-    genre = data.get("genre", "Unknown Genre")
-    setting = data.get("setting", "an unknown place")
-    main_character = data.get("mainCharacter", "an unknown hero")
-
-    intro = (
-        f"Welcome to '{title}', a {genre} adventure set in {setting}.\n"
-        f"You play as {main_character}. Your quest begins now!"
+    data = request.get_json() or {}
+    intro = gen_intro(
+        data.get("gameTitle", "Untitled Game"),
+        data.get("genre", ""),
+        data.get("setting", ""),
+        data.get("tone", ""),
+        data.get("mainCharacter", ""),
+        data.get("goal", ""),
     )
-
     return jsonify({"intro": intro, "gameData": data})
 
 
