@@ -52,3 +52,28 @@ def gen_intro(title, genre, setting, tone, main_character, goal):
         ],
         max_tokens=300,
     )
+
+
+def gen_outcomes(scene_text, choices):
+    system_prompt = (
+        "You are an AI that writes short outcomes for branching text-based games.\n"
+        "Rules:\n"
+        "- For each choice, write 1 concise outcome sentence.\n"
+        "- Make it a hook that sets up the next scene.\n"
+        "- No spoilers about future scenes.\n"
+        "- Keep same order as input choices."
+    )
+    user_prompt = f"Scene:\n{scene_text}\n\n" "Choices:\n" + "\n".join(
+        f"- {c}" for c in choices
+    )
+    text = _chat(
+        [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ],
+        max_tokens=350,
+    )
+    lines = [ln.strip("-• ").strip() for ln in text.splitlines() if ln.strip()]
+    if len(lines) < len(choices):
+        lines += ["[Outcome unavailable]"] * (len(choices) - len(lines))
+    return lines[: len(choices)]

@@ -1,5 +1,5 @@
 from dotenv import load_dotenv
-from ai_provider import gen_intro
+from ai_provider import gen_intro, gen_outcomes
 
 load_dotenv()
 
@@ -26,14 +26,10 @@ def generate_game():
 
 @app.route("/api/generate-outcomes", methods=["POST"])
 def generate_outcomes():
-    data = request.get_json()
+    data = request.get_json() or {}
     scene = data.get("scene", "")
     choices = data.get("choices", [])
-    # TODO: Replace mock outcome generation with real AI integration
-    outcomes = [
-        f"If you choose to '{choice}', here is what happens next in the story..."
-        for choice in choices
-    ]
+    outcomes = gen_outcomes(scene, choices)
     return jsonify({"outcomes": outcomes})
 
 
