@@ -12,6 +12,7 @@ export default function Form() {
     const [mainCharacter, setMainCharacter] = useState("");
     const [goal, setGoal] = useState("");
     const [generatedIntro, setGeneratedIntro] = useState("");
+    const [loadingIntro, setLoadingIntro] = useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -26,6 +27,7 @@ export default function Form() {
         console.log("Form submitted:", formData);
 
         try {
+            setLoadingIntro(true);
             const response = await fetch("http://localhost:5000/api/generate-game", {
                 method: "POST",
                 headers: {
@@ -38,6 +40,8 @@ export default function Form() {
             navigate("/story-tree", { state: { intro: result.intro, formData } });
         } catch (err) {
             console.error("Error sending data to backend:", err);
+        } finally {
+            setLoadingIntro(false);
         }
     };
 
@@ -117,17 +121,12 @@ export default function Form() {
                             <button type="reset" onClick={handleReset}>
                                 Reset
                             </button>
-                            <button type="submit">Submit</button>
+                            <button type="submit" className="submit-btn" disabled={loadingIntro}>
+                                {loadingIntro ? "Generating…" : "Generate Intro"}
+                            </button>
                         </div>
                     </form>
                 </fieldset>
-
-                {generatedIntro && (
-                    <div className="game-intro">
-                        <h2>Game Intro</h2>
-                        <p>{generatedIntro}</p>
-                    </div>
-                )}
             </div>
         </div>
     );
