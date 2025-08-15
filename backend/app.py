@@ -1,10 +1,10 @@
 from dotenv import load_dotenv
-from ai_provider import gen_intro, gen_outcomes, gen_narrative
 
 load_dotenv()
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from ai_provider import gen_intro, gen_outcomes, gen_narrative
 
 app = Flask(__name__)
 CORS(app)
