@@ -119,8 +119,10 @@ export default function Play() {
                             {(currentScene?.choices || [])
                                 .filter((c) => c.text?.trim())
                                 .map((c, idx) => {
-                                    const targetExists =
-                                        !!c.nextSceneId && storyData.scenes?.[c.nextSceneId];
+                                    const isEndingChoice = !c.nextSceneId;
+                                    const targetExists = c.nextSceneId
+                                        ? !!storyData.scenes?.[c.nextSceneId]
+                                        : true;
                                     const leadsToVisited =
                                         !!c.nextSceneId && visited.has(c.nextSceneId);
                                     return (
@@ -135,9 +137,9 @@ export default function Play() {
                                             disabled={!targetExists}
                                             title={
                                                 !targetExists
-                                                    ? c.nextSceneId
-                                                        ? `Target scene "${c.nextSceneId}" doesn't exist`
-                                                        : "This path has no next scene yet"
+                                                    ? `Target scene "${c.nextSceneId}" doesn't exist`
+                                                    : isEndingChoice
+                                                    ? "This choice ends the story"
                                                     : leadsToVisited
                                                     ? "You've been here before"
                                                     : ""
