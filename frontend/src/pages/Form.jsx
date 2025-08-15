@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
+
 import "../styles/Form.css";
 
 export default function Form() {
@@ -25,7 +26,6 @@ export default function Form() {
         console.log("Form submitted:", formData);
 
         try {
-            // TODO: The backend currently returns a mock intro. Update backend to use real AI for intro generation later.
             const response = await fetch("http://localhost:5000/api/generate-game", {
                 method: "POST",
                 headers: {

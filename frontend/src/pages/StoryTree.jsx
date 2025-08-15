@@ -289,7 +289,6 @@ export default function StoryTree() {
                                     const choiceOutcome =
                                         parentScene.choices[activeParent.choiceIdx].outcome;
 
-                                    // TODO: replace mock with real LLM later
                                     const response = await fetch(
                                         "http://localhost:5000/api/generate-narrative",
                                         {
@@ -400,7 +399,6 @@ export default function StoryTree() {
                                         return;
                                     }
 
-                                    // TODO: replace mock with real LLM later
                                     const response = await fetch(
                                         "http://localhost:5000/api/generate-outcomes",
                                         {
