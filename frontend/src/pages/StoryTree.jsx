@@ -1,7 +1,10 @@
 import { useLocation, useNavigate } from "react-router";
 import { useEffect, useState, useRef } from "react";
-import "../styles/StoryTree.css";
+import toast from "react-hot-toast";
+
 import { validateJSON } from "../lib/validateJSON.js";
+
+import "../styles/StoryTree.css";
 
 export default function StoryTree() {
     const location = useLocation();
@@ -42,8 +45,7 @@ export default function StoryTree() {
                 const parsed = JSON.parse(reader.result);
                 const { ok, errors } = validateJSON(parsed);
                 if (!ok) {
-                    if (typeof notify === "function")
-                        notify("Invalid story JSON:\n" + errors.join("\n"), "error");
+                    toast.error("Invalid story JSON:\n" + errors.join("\n"));
                     return;
                 }
                 setStoryData(parsed);
@@ -55,9 +57,9 @@ export default function StoryTree() {
                     { id: 1, text: "", outcome: "", nextSceneId: null },
                     { id: 2, text: "", outcome: "", nextSceneId: null },
                 ]);
-                if (typeof notify === "function") notify("Story imported.", "success");
+                toast.success("Story imported.");
             } catch (e) {
-                if (typeof notify === "function") notify("Invalid JSON file.", "error");
+                toast.error("Invalid JSON file.");
                 console.error(e);
             }
         };
@@ -85,7 +87,7 @@ export default function StoryTree() {
                 if (parsed && parsed.scenes && Object.keys(parsed.scenes).length > 0) {
                     setStoryData(parsed);
                     setHasSavedRootScene(true);
-                    if (typeof notify === "function") notify("Autosave loaded.", "info");
+                    toast("Autosave loaded.");
                 }
             }
         } catch (e) {
@@ -110,13 +112,6 @@ export default function StoryTree() {
         { id: 1, text: "", outcome: "", nextSceneId: null },
         { id: 2, text: "", outcome: "", nextSceneId: null },
     ]);
-
-    const [toast, setToast] = useState(null);
-    function notify(msg, type = "info", ms = 3000) {
-        setToast({ msg, type });
-        window.clearTimeout(notify._t);
-        notify._t = window.setTimeout(() => setToast(null), ms);
-    }
 
     function nextSceneIdValue(prevScenes) {
         return "scene-" + (Object.keys(prevScenes).length + 1);
@@ -177,12 +172,12 @@ export default function StoryTree() {
 
     async function handleSaveScene() {
         if (!sceneIntro.trim()) {
-            notify("Scene narrative cannot be empty.", "error");
+            toast.error("Scene narrative cannot be empty.");
             return;
         }
         const nonEmptyChoices = choices.filter((c) => c.text.trim());
         if (nonEmptyChoices.length === 0) {
-            notify("Please add at least one choice with text.", "error");
+            toast.error("Please add at least one choice with text.");
             return;
         }
 
@@ -203,7 +198,7 @@ export default function StoryTree() {
                     },
                 },
             }));
-            notify("Scene updated!", "success");
+            toast.success("Scene updated!");
             return;
         }
 
@@ -249,11 +244,11 @@ export default function StoryTree() {
 
         if (activeParent) {
             setActiveParent(null);
-            notify("Child scene created and linked!", "success");
+            toast.success("Child scene created and linked!");
         } else {
             setHasSavedRootScene(true);
             setCurrentSceneId(null);
-            notify("Root scene saved!", "success");
+            toast.success("Root scene saved!");
         }
 
         setSceneIntro("");
@@ -265,12 +260,6 @@ export default function StoryTree() {
 
     return (
         <div className="story-tree">
-            {toast && (
-                <div className={`toast toast-${toast.type}`} role="status" aria-live="polite">
-                    {toast.msg}
-                </div>
-            )}
-
             <h1>Story Tree Editor</h1>
 
             {banner}
@@ -394,9 +383,8 @@ export default function StoryTree() {
                                         .map((c) => c.text);
 
                                     if (!sceneIntro || choiceTexts.length === 0) {
-                                        notify(
-                                            "Please enter the scene narrative and at least one choice.",
-                                            "error"
+                                        toast.error(
+                                            "Please enter the scene narrative and at least one choice."
                                         );
                                         return;
                                     }
@@ -476,7 +464,7 @@ export default function StoryTree() {
                     onClick={() => {
                         localStorage.removeItem(AUTOSAVE_KEY);
                         resetEditorToBlank();
-                        notify("Autosave cleared.", "info");
+                        toast.success("Autosave cleared.");
                     }}
                 >
                     🧹 Clear Autosave
