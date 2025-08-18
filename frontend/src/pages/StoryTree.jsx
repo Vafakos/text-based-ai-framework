@@ -1,6 +1,7 @@
 import { useLocation, useNavigate } from "react-router";
 import { useEffect, useState, useRef } from "react";
 import "../styles/StoryTree.css";
+import { validateJSON } from "../lib/validateJSON.js";
 
 export default function StoryTree() {
     const location = useLocation();
@@ -36,14 +37,13 @@ export default function StoryTree() {
     function handleImportFile(file) {
         if (!file) return;
         const reader = new FileReader();
-        reader.onerror = () => {
-            if (typeof notify === "function") notify("Failed to read file.", "error");
-        };
         reader.onload = () => {
             try {
                 const parsed = JSON.parse(reader.result);
-                if (!parsed?.scenes) {
-                    if (typeof notify === "function") notify("No scenes found in JSON.", "error");
+                const { ok, errors } = validateJSON(parsed);
+                if (!ok) {
+                    if (typeof notify === "function")
+                        notify("Invalid story JSON:\n" + errors.join("\n"), "error");
                     return;
                 }
                 setStoryData(parsed);
@@ -61,6 +61,7 @@ export default function StoryTree() {
                 console.error(e);
             }
         };
+
         reader.readAsText(file);
     }
 
