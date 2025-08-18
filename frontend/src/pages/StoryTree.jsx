@@ -87,7 +87,7 @@ export default function StoryTree() {
                 if (parsed && parsed.scenes && Object.keys(parsed.scenes).length > 0) {
                     setStoryData(parsed);
                     setHasSavedRootScene(true);
-                    toast("Autosave loaded.");
+                    toast.success("Autosave loaded.");
                 }
             }
         } catch (e) {
