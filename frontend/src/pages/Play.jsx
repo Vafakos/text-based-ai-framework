@@ -27,6 +27,61 @@ export default function Play() {
         );
     }
 
+    function isPuzzleScene(scene) {
+        return scene?.type === "puzzle" && scene?.puzzle && typeof scene.puzzle === "object";
+    }
+
+    function puzzleCheck(scene, answer) {
+        if (!isPuzzleScene(scene)) return false;
+        const { solution } = scene.puzzle || {};
+        if (!solution) return false;
+
+        const a = (answer ?? "").trim();
+        if (solution.mode === "exact") {
+            return a.toLowerCase() === String(solution.value || "").toLowerCase();
+        }
+        if (solution.mode === "regex") {
+            try {
+                const re = new RegExp(solution.pattern, solution.flags || "");
+                return re.test(a);
+            } catch {
+                return false;
+            }
+        }
+        if (solution.mode === "keywords") {
+            const need = Array.isArray(solution.keywords) ? solution.keywords : [];
+            const low = a.toLowerCase();
+            return need.every((k) => low.includes(String(k).toLowerCase()));
+        }
+        return false;
+    }
+
+    function handlePuzzleSubmit() {
+        const scene = currentScene;
+        const ok = puzzleCheck(scene, puzzleInput);
+        const { successNextSceneId, failNextSceneId, maxAttempts = 3 } = scene.puzzle || {};
+
+        if (ok) {
+            if (successNextSceneId) {
+                setHistory((h) => [...h, { sceneId: successNextSceneId }]);
+            }
+            setPuzzleInput("");
+            setPuzzleAttempts(0);
+            return;
+        }
+
+        const nextAttempts = puzzleAttempts + 1;
+        setPuzzleAttempts(nextAttempts);
+
+        if (nextAttempts >= maxAttempts) {
+            if (failNextSceneId) {
+                setHistory((h) => [...h, { sceneId: failNextSceneId }]);
+            }
+            setPuzzleInput("");
+            setPuzzleAttempts(0);
+        }
+    }
+
     const startSceneId = storyData.startSceneId || "scene-1";
     const [history, setHistory] = useState([{ sceneId: startSceneId }]);
     const [visited, setVisited] = useState(() => new Set([startSceneId]));
@@ -38,6 +93,9 @@ export default function Play() {
         () => storyData.scenes?.[currentSceneId],
         [storyData, currentSceneId]
     );
+
+    const [puzzleInput, setPuzzleInput] = useState("");
+    const [puzzleAttempts, setPuzzleAttempts] = useState(0);
 
     useEffect(() => {
         if (currentSceneId && !visited.has(currentSceneId)) {
@@ -88,6 +146,7 @@ export default function Play() {
 
     const isEnding = useMemo(() => {
         if (!currentScene) return true;
+        if (isPuzzleScene(currentScene)) return false;
         const hasValidNext = currentScene.choices?.some(
             (c) => c.nextSceneId && storyData.scenes?.[c.nextSceneId]
         );
@@ -111,7 +170,32 @@ export default function Play() {
                 </p>
             </div>
 
-            {!isEnding ? (
+            {isPuzzleScene(currentScene) && (
+                <div className="choice-list" style={{ marginTop: "-0.25rem" }}>
+                    <h3>{currentScene?.puzzle?.prompt || "Your answer:"}</h3>
+                    <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                        <input
+                            type="text"
+                            value={puzzleInput}
+                            onChange={(e) => setPuzzleInput(e.target.value)}
+                            placeholder="Type answer…"
+                            className="puzzle-input"
+                        />
+                        <button className="save-scene-btn" onClick={handlePuzzleSubmit}>
+                            Submit
+                        </button>
+                    </div>
+                    {currentScene?.puzzle?.hints &&
+                        puzzleAttempts > 0 &&
+                        currentScene.puzzle.hints[puzzleAttempts - 1] && (
+                            <p style={{ marginTop: "0.5rem", opacity: 0.85 }}>
+                                Hint: {currentScene.puzzle.hints[puzzleAttempts - 1]}
+                            </p>
+                        )}
+                </div>
+            )}
+
+            {!isEnding && !isPuzzleScene(currentScene) ? (
                 <>
                     <div className="choice-list">
                         <h3>What do you do?</h3>

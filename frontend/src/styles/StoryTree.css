@@ -289,3 +289,13 @@ button[disabled] {
     gap: 0.5rem;
     justify-content: center;
 }
+
+.puzzle-input {
+    flex: 1;
+    color: var(--text);
+    background: var(--bg-panel-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.6rem 0.7rem;
+    font-size: 1rem;
+}
