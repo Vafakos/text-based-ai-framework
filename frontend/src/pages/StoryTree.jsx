@@ -339,6 +339,7 @@ export default function StoryTree() {
                                         style={{ flex: 1, marginRight: 8 }}
                                     />
                                     <button
+                                        className="remove-btn"
                                         onClick={() => {
                                             setChoices(choices.filter((c, i) => i !== idx));
                                         }}
@@ -488,10 +489,7 @@ export default function StoryTree() {
                     {Object.values(storyData.scenes).map((scene) => (
                         <li key={scene.id}>
                             <b>{scene.id}:</b> {scene.text.slice(0, 60)}...
-                            <button
-                                style={{ marginLeft: "0.5rem" }}
-                                onClick={() => handleEditScene(scene.id)}
-                            >
+                            <button className="edit-btn" onClick={() => handleEditScene(scene.id)}>
                                 ✏️ Edit
                             </button>
                             <ul>
@@ -520,7 +518,7 @@ export default function StoryTree() {
             </div>
             <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "2rem" }}>
                 <button
-                    className="save-scene-btn"
+                    className="play-btn"
                     onClick={() => navigate("/play", { state: { storyData } })}
                     title="Play from the start scene"
                 >
