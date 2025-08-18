@@ -9,13 +9,10 @@ import "../styles/StoryTree.css";
 export default function StoryTree() {
     const location = useLocation();
     const navigate = useNavigate();
-
     const { intro, formData } = location.state || {};
     const [sceneIntro, setSceneIntro] = useState(intro);
     const [hasSavedRootScene, setHasSavedRootScene] = useState(false);
-
     const [activeParent, setActiveParent] = useState(null);
-
     const [currentSceneId, setCurrentSceneId] = useState(null);
 
     const [storyData, setStoryData] = useState({
@@ -23,9 +20,47 @@ export default function StoryTree() {
         startSceneId: "scene-1",
     });
 
+    const [sceneType, setSceneType] = useState("narrative");
+
+    const [puzzle, setPuzzle] = useState({
+        prompt: "",
+        solution: { mode: "regex", value: "", pattern: "", keywords: "" },
+        maxAttempts: 3,
+        hintsText: "",
+        successNextSceneId: "",
+        failNextSceneId: "",
+    });
+
     const AUTOSAVE_KEY = "tbg_storyData_v1";
     const saveDebounceRef = useRef();
     const fileInputRef = useRef(null);
+
+    function buildPuzzleFromState() {
+        const hintsArr = (puzzle.hintsText || "")
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean);
+
+        const mode = puzzle.solution?.mode === "keywords" ? "keywords" : "regex";
+        const sol = { mode };
+        if (mode === "regex") {
+            sol.pattern = puzzle.solution.pattern || "";
+        } else {
+            sol.keywords = (puzzle.solution.keywords || "")
+                .split(",")
+                .map((s) => s.trim())
+                .filter(Boolean);
+        }
+
+        return {
+            prompt: puzzle.prompt || "",
+            solution: sol,
+            maxAttempts: Math.max(1, Number(puzzle.maxAttempts) || 3),
+            hints: hintsArr,
+            successNextSceneId: puzzle.successNextSceneId || "",
+            failNextSceneId: puzzle.failNextSceneId || "",
+        };
+    }
 
     function exportStoryToFile(data) {
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
@@ -77,6 +112,15 @@ export default function StoryTree() {
             { id: 2, text: "", outcome: "", nextSceneId: null },
         ]);
         setStoryData({ scenes: {}, startSceneId: "scene-1" });
+        setSceneType("narrative");
+        setPuzzle({
+            prompt: "",
+            solution: { mode: "regex", value: "", pattern: "", keywords: "" },
+            maxAttempts: 3,
+            hintsText: "",
+            successNextSceneId: "",
+            failNextSceneId: "",
+        });
     }
 
     useEffect(() => {
@@ -125,22 +169,54 @@ export default function StoryTree() {
             { id: 1, text: "", outcome: "", nextSceneId: null },
             { id: 2, text: "", outcome: "", nextSceneId: null },
         ]);
+        setSceneType("narrative");
+        setSceneType("narrative");
+        setPuzzle({
+            prompt: "",
+            solution: { mode: "regex", pattern: "", keywords: "" },
+            maxAttempts: 3,
+            hintsText: "",
+            successNextSceneId: "",
+            failNextSceneId: "",
+        });
     }
 
     function handleEditScene(sceneId) {
         const s = storyData.scenes[sceneId];
         if (!s) return;
+
         setActiveParent(null);
         setCurrentSceneId(sceneId);
-        setSceneIntro(s.text);
+        setSceneIntro(s.text || "");
         setChoices(
-            s.choices.map((c, i) => ({
+            (Array.isArray(s.choices) ? s.choices : []).map((c, i) => ({
                 id: Date.now() + i,
-                text: c.text,
-                outcome: c.outcome,
+                text: c.text || "",
+                outcome: c.outcome || "",
                 nextSceneId: c.nextSceneId ?? null,
             }))
         );
+
+        const t = s.type || "narrative";
+        setSceneType(t);
+
+        if (t === "puzzle" && s.puzzle) {
+            const p = s.puzzle;
+            setPuzzle({
+                prompt: p.prompt || "",
+                solution: {
+                    mode: p.solution?.mode === "keywords" ? "keywords" : "regex",
+                    pattern: p.solution?.pattern || "",
+                    keywords: Array.isArray(p.solution?.keywords)
+                        ? p.solution.keywords.join(", ")
+                        : "",
+                },
+                maxAttempts: p.maxAttempts ?? 3,
+                hintsText: Array.isArray(p.hints) ? p.hints.join(", ") : "",
+                successNextSceneId: p.successNextSceneId || "",
+                failNextSceneId: p.failNextSceneId || "",
+            });
+        }
     }
 
     // banner text for context
@@ -168,6 +244,24 @@ export default function StoryTree() {
         );
     }
 
+    function autoEnsurePuzzleTargets(prevState, puzzleObj) {
+        const scenes = { ...prevState.scenes };
+        const patched = { ...puzzleObj };
+
+        if (!patched.successNextSceneId) {
+            const id = nextSceneIdValue(scenes);
+            scenes[id] = { id, text: "Puzzle solved.", choices: [] };
+            patched.successNextSceneId = id;
+        }
+        if (!patched.failNextSceneId) {
+            const id = nextSceneIdValue(scenes);
+            scenes[id] = { id, text: "Puzzle failed.", choices: [] };
+            patched.failNextSceneId = id;
+        }
+
+        return { scenes, puzzle: patched };
+    }
+
     const showEditor = !hasSavedRootScene || !!activeParent || !!currentSceneId;
 
     async function handleSaveScene() {
@@ -176,28 +270,44 @@ export default function StoryTree() {
             return;
         }
         const nonEmptyChoices = choices.filter((c) => c.text.trim());
-        if (nonEmptyChoices.length === 0) {
+        if (sceneType !== "puzzle" && nonEmptyChoices.length === 0) {
             toast.error("Please add at least one choice with text.");
             return;
+        }
+        if (sceneType === "puzzle") {
+            const p = buildPuzzleFromState();
+            if (!p.successNextSceneId || !p.failNextSceneId) {
+                toast.error("Puzzle must have success and fail scene ids.");
+                return;
+            }
         }
 
         // EDIT existing scene
         if (currentSceneId && storyData.scenes[currentSceneId]) {
-            setStoryData((prev) => ({
-                ...prev,
-                scenes: {
-                    ...prev.scenes,
-                    [currentSceneId]: {
-                        ...prev.scenes[currentSceneId],
-                        text: sceneIntro,
-                        choices: choices.map((c) => ({
-                            text: c.text,
-                            outcome: c.outcome,
-                            nextSceneId: c.nextSceneId ?? null,
-                        })),
+            setStoryData((prev) => {
+                const updatedScene = {
+                    ...prev.scenes[currentSceneId],
+                    text: sceneIntro,
+                    type: sceneType || "narrative",
+                    choices: choices.map((c) => ({
+                        text: c.text || "",
+                        outcome: c.outcome || "",
+                        nextSceneId: c.nextSceneId ?? null,
+                    })),
+                };
+                if (sceneType === "puzzle") {
+                    updatedScene.puzzle = buildPuzzleFromState();
+                } else {
+                    delete updatedScene.puzzle;
+                }
+                return {
+                    ...prev,
+                    scenes: {
+                        ...prev.scenes,
+                        [currentSceneId]: updatedScene,
                     },
-                },
-            }));
+                };
+            });
             toast.success("Scene updated!");
             return;
         }
@@ -208,19 +318,23 @@ export default function StoryTree() {
             const newScene = {
                 id: sceneId,
                 text: sceneIntro,
+                type: sceneType || "narrative",
                 choices: choices.map((c) => ({
-                    text: c.text,
-                    outcome: c.outcome,
+                    text: c.text || "",
+                    outcome: c.outcome || "",
                     nextSceneId: null,
                 })),
             };
+            if (sceneType === "puzzle") {
+                newScene.puzzle = buildPuzzleFromState();
+            }
 
             if (activeParent) {
                 const parent = { ...prev.scenes[activeParent.sceneId] };
                 parent.choices = parent.choices.map((c, i) =>
                     i === activeParent.choiceIdx ? { ...c, nextSceneId: sceneId } : c
                 );
-                const updated = {
+                return {
                     ...prev,
                     scenes: {
                         ...prev.scenes,
@@ -228,18 +342,15 @@ export default function StoryTree() {
                         [sceneId]: newScene,
                     },
                 };
-                return updated;
             }
 
-            // root scene
-            const updated = {
+            return {
                 ...prev,
                 scenes: {
                     ...prev.scenes,
                     [sceneId]: newScene,
                 },
             };
-            return updated;
         });
 
         if (activeParent) {
@@ -256,6 +367,15 @@ export default function StoryTree() {
             { id: 1, text: "", outcome: "", nextSceneId: null },
             { id: 2, text: "", outcome: "", nextSceneId: null },
         ]);
+        setSceneType("narrative");
+        setPuzzle({
+            prompt: "",
+            solution: { mode: "regex", value: "", pattern: "", keywords: "" },
+            maxAttempts: 3,
+            hintsText: "",
+            successNextSceneId: "",
+            failNextSceneId: "",
+        });
     }
 
     return (
@@ -266,6 +386,34 @@ export default function StoryTree() {
 
             {showEditor ? (
                 <>
+                    <div className="choice-list" style={{ marginBottom: "1rem" }}>
+                        <h3>Scene Type</h3>
+                        <div
+                            style={{
+                                display: "flex",
+                                gap: "0.75rem",
+                                flexWrap: "wrap",
+                                alignItems: "center",
+                            }}
+                        >
+                            <select
+                                value={sceneType}
+                                onChange={(e) => setSceneType(e.target.value)}
+                                style={{ padding: ".5rem .7rem", borderRadius: 8 }}
+                            >
+                                <option value="narrative">Narrative</option>
+                                <option value="dialogue">Dialogue</option>
+                                <option value="puzzle">Puzzle</option>
+                            </select>
+                            {sceneType === "dialogue" && (
+                                <span style={{ opacity: 0.8 }}>
+                                    Tip: Use the narrative box for the NPC line; choices are the
+                                    player replies.
+                                </span>
+                            )}
+                        </div>
+                    </div>
+
                     <div className="intro-block">
                         <h2>Scene Narrative</h2>
                         {activeParent && (
@@ -318,6 +466,144 @@ export default function StoryTree() {
                             placeholder="Enter the narrative for this scene..."
                         />
                     </div>
+                    {sceneType === "puzzle" && (
+                        <div className="choice-list" style={{ marginTop: "0.75rem" }}>
+                            <h3>Puzzle</h3>
+
+                            <label style={{ display: "block", margin: "0.5rem 0 0.25rem" }}>
+                                Prompt shown to player
+                            </label>
+                            <input
+                                type="text"
+                                className="puzzle-input"
+                                value={puzzle.prompt}
+                                onChange={(e) => setPuzzle({ ...puzzle, prompt: e.target.value })}
+                                placeholder="e.g., Enter password:"
+                            />
+
+                            <div style={{ display: "grid", gap: "0.5rem", marginTop: "0.75rem" }}>
+                                <div
+                                    style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}
+                                >
+                                    <label>Solution mode:</label>
+                                    <select
+                                        value={puzzle.solution.mode}
+                                        onChange={(e) =>
+                                            setPuzzle({
+                                                ...puzzle,
+                                                solution: {
+                                                    ...puzzle.solution,
+                                                    mode: e.target.value,
+                                                },
+                                            })
+                                        }
+                                    >
+                                        <option value="regex">Input</option>
+                                        <option value="keywords">Keywords (comma-separated)</option>
+                                    </select>
+                                </div>
+
+                                {puzzle.solution.mode === "regex" && (
+                                    <div style={{ display: "flex", gap: "0.5rem" }}>
+                                        <input
+                                            type="text"
+                                            className="puzzle-input"
+                                            placeholder="Pattern, e.g. ^(riddle|RIDDLE)$"
+                                            value={puzzle.solution.pattern}
+                                            onChange={(e) =>
+                                                setPuzzle({
+                                                    ...puzzle,
+                                                    solution: {
+                                                        ...puzzle.solution,
+                                                        pattern: e.target.value,
+                                                    },
+                                                })
+                                            }
+                                        />
+                                    </div>
+                                )}
+
+                                {puzzle.solution.mode === "keywords" && (
+                                    <input
+                                        type="text"
+                                        className="puzzle-input"
+                                        placeholder="Keywords (comma-separated)"
+                                        value={puzzle.solution.keywords}
+                                        onChange={(e) =>
+                                            setPuzzle({
+                                                ...puzzle,
+                                                solution: {
+                                                    ...puzzle.solution,
+                                                    keywords: e.target.value,
+                                                },
+                                            })
+                                        }
+                                    />
+                                )}
+                            </div>
+
+                            <div style={{ display: "grid", gap: "0.5rem", marginTop: "0.75rem" }}>
+                                <input
+                                    type="text"
+                                    className="puzzle-input"
+                                    placeholder="Hints (comma-separated)"
+                                    value={puzzle.hintsText}
+                                    onChange={(e) =>
+                                        setPuzzle({ ...puzzle, hintsText: e.target.value })
+                                    }
+                                />
+                                <div
+                                    style={{
+                                        display: "flex",
+                                        gap: "0.75rem",
+                                        alignItems: "center",
+                                    }}
+                                >
+                                    <label>Max attempts:</label>
+                                    <input
+                                        type="number"
+                                        min={1}
+                                        className="puzzle-input"
+                                        style={{ maxWidth: 120 }}
+                                        value={puzzle.maxAttempts}
+                                        onChange={(e) =>
+                                            setPuzzle({
+                                                ...puzzle,
+                                                maxAttempts: Number(e.target.value || 1),
+                                            })
+                                        }
+                                    />
+                                </div>
+
+                                <div style={{ display: "grid", gap: "0.5rem" }}>
+                                    <input
+                                        type="text"
+                                        className="puzzle-input"
+                                        placeholder='successNextSceneId (e.g., "scene-pass")'
+                                        value={puzzle.successNextSceneId}
+                                        onChange={(e) =>
+                                            setPuzzle({
+                                                ...puzzle,
+                                                successNextSceneId: e.target.value,
+                                            })
+                                        }
+                                    />
+                                    <input
+                                        type="text"
+                                        className="puzzle-input"
+                                        placeholder='failNextSceneId (e.g., "scene-fail")'
+                                        value={puzzle.failNextSceneId}
+                                        onChange={(e) =>
+                                            setPuzzle({
+                                                ...puzzle,
+                                                failNextSceneId: e.target.value,
+                                            })
+                                        }
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     <div className="choice-list">
                         <h3>Add Choices for This Scene</h3>
@@ -524,6 +810,11 @@ export default function StoryTree() {
                                     </li>
                                 ))}
                             </ul>
+                            <b>{scene.id}</b>
+                            {scene.type ? (
+                                <span style={{ marginLeft: 8, opacity: 0.75 }}>· {scene.type}</span>
+                            ) : null}
+                            : {scene.text.slice(0, 60)}...
                         </li>
                     ))}
                 </ul>

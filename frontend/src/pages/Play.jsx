@@ -32,27 +32,25 @@ export default function Play() {
     }
 
     function puzzleCheck(scene, answer) {
-        if (!isPuzzleScene(scene)) return false;
-        const { solution } = scene.puzzle || {};
-        if (!solution) return false;
+        if (!scene?.puzzle || !scene?.puzzle?.solution) return false;
+        const { solution } = scene.puzzle;
+        const a = String(answer || "").trim();
 
-        const a = (answer ?? "").trim();
-        if (solution.mode === "exact") {
-            return a.toLowerCase() === String(solution.value || "").toLowerCase();
-        }
         if (solution.mode === "regex") {
             try {
-                const re = new RegExp(solution.pattern, solution.flags || "");
+                const re = new RegExp(solution.pattern || "");
                 return re.test(a);
             } catch {
                 return false;
             }
         }
+
         if (solution.mode === "keywords") {
             const need = Array.isArray(solution.keywords) ? solution.keywords : [];
             const low = a.toLowerCase();
             return need.every((k) => low.includes(String(k).toLowerCase()));
         }
+
         return false;
     }
 
