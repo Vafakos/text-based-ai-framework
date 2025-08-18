@@ -279,9 +279,8 @@ export default function StoryTree() {
                                     const choiceOutcome =
                                         parentScene.choices[activeParent.choiceIdx].outcome;
 
-                                    const response = await fetch(
-                                        "http://localhost:5000/api/generate-narrative",
-                                        {
+                                    await toast.promise(
+                                        fetch("http://localhost:5000/api/generate-narrative", {
                                             method: "POST",
                                             headers: { "Content-Type": "application/json" },
                                             body: JSON.stringify({
@@ -289,10 +288,23 @@ export default function StoryTree() {
                                                 choiceText,
                                                 outcomeText: choiceOutcome,
                                             }),
+                                        })
+                                            .then((res) => {
+                                                if (!res.ok) throw new Error("Server error");
+                                                return res.json();
+                                            })
+                                            .then((data) => {
+                                                if (!data || !data.narrative) {
+                                                    throw new Error("No narrative returned");
+                                                }
+                                                setSceneIntro(data.narrative);
+                                            }),
+                                        {
+                                            loading: "Generating narrative…",
+                                            success: "Narrative generated!",
+                                            error: "Failed to generate narrative.",
                                         }
                                     );
-                                    const data = await response.json();
-                                    setSceneIntro(data.narrative);
                                 }}
                             >
                                 🪄 AI: Suggest Scene Narrative
@@ -389,24 +401,36 @@ export default function StoryTree() {
                                         return;
                                     }
 
-                                    const response = await fetch(
-                                        "http://localhost:5000/api/generate-outcomes",
-                                        {
+                                    await toast.promise(
+                                        fetch("http://localhost:5000/api/generate-outcomes", {
                                             method: "POST",
                                             headers: { "Content-Type": "application/json" },
                                             body: JSON.stringify({
                                                 scene: sceneIntro,
                                                 choices: choiceTexts,
                                             }),
+                                        })
+                                            .then((res) => {
+                                                if (!res.ok) throw new Error("Server error");
+                                                return res.json();
+                                            })
+                                            .then((data) => {
+                                                if (!data || !Array.isArray(data.outcomes)) {
+                                                    throw new Error("No outcomes returned");
+                                                }
+                                                setChoices((prev) =>
+                                                    prev.map((choice, idx) => ({
+                                                        ...choice,
+                                                        outcome:
+                                                            data.outcomes[idx] ?? choice.outcome,
+                                                    }))
+                                                );
+                                            }),
+                                        {
+                                            loading: "Generating outcomes…",
+                                            success: "Outcomes generated!",
+                                            error: "Failed to generate outcomes.",
                                         }
-                                    );
-                                    const data = await response.json();
-
-                                    setChoices(
-                                        choices.map((choice, idx) => ({
-                                            ...choice,
-                                            outcome: data.outcomes[idx] || choice.outcome,
-                                        }))
                                     );
                                 }}
                             >
