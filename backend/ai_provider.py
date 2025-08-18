@@ -85,6 +85,7 @@ def gen_narrative(parent_text, choice_text, outcome_text):
         "Rules:\n"
         "- Write 3–6 sentences.\n"
         "- Base it on the prior scene, the choice taken, and its immediate outcome.\n"
+        "- The outcome from the previous choice wasn't known by the player so use the information to the response\n"
         "- Present tense, second person.\n"
         "- No choices yet — just narrative."
     )
