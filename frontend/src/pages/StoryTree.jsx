@@ -810,11 +810,7 @@ export default function StoryTree() {
                                     </li>
                                 ))}
                             </ul>
-                            <b>{scene.id}</b>
-                            {scene.type ? (
-                                <span style={{ marginLeft: 8, opacity: 0.75 }}>· {scene.type}</span>
-                            ) : null}
-                            : {scene.text.slice(0, 60)}...
+                            <b>{scene.type}</b>
                         </li>
                     ))}
                 </ul>
