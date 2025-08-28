@@ -300,7 +300,6 @@ function BreadcrumbTrail({ ids, onJump }) {
 function EndingScreen({ stats, onRestart, onEdit }) {
     return (
         <div className="tbg-ending">
-            <h2 className="tbg-ending-title">The End</h2>
             <p className="tbg-ending-sub">
                 You visited {stats.visitedCount} of {stats.totalScenes} scenes in {stats.steps}{" "}
                 steps.
