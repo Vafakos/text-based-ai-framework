@@ -131,6 +131,7 @@ dist
 
 # --- Python backend ignores ---
 venv/
+.venv/
 __pycache__/
 *.pyc
 *.pyo

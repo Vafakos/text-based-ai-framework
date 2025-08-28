@@ -6,6 +6,8 @@ import { validateJSON } from "../lib/validateJSON.js";
 
 import "../styles/StoryTree.css";
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "/api";
+
 export default function StoryTree() {
     const location = useLocation();
     const navigate = useNavigate();
@@ -428,7 +430,7 @@ export default function StoryTree() {
                                         parentScene.choices[activeParent.choiceIdx].outcome;
 
                                     await toast.promise(
-                                        fetch("http://localhost:5000/api/generate-narrative", {
+                                        fetch(`${API_BASE}/generate-narrative`, {
                                             method: "POST",
                                             headers: { "Content-Type": "application/json" },
                                             body: JSON.stringify({
@@ -688,7 +690,7 @@ export default function StoryTree() {
                                     }
 
                                     await toast.promise(
-                                        fetch("http://localhost:5000/api/generate-outcomes", {
+                                        fetch(`${API_BASE}/generate-outcomes`, {
                                             method: "POST",
                                             headers: { "Content-Type": "application/json" },
                                             body: JSON.stringify({

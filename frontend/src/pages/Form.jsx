@@ -3,6 +3,8 @@ import { useNavigate } from "react-router";
 
 import "../styles/Form.css";
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "/api";
+
 export default function Form() {
     const navigate = useNavigate();
     const [gameTitle, setGameTitle] = useState("");
@@ -28,7 +30,7 @@ export default function Form() {
 
         try {
             setLoadingIntro(true);
-            const response = await fetch("http://localhost:5000/api/generate-game", {
+            const response = await fetch(`${API_BASE}/generate-game`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
