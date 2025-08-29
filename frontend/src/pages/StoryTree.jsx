@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import toast from "react-hot-toast";
 
 import { validateJSON } from "../lib/validateJSON.js";
@@ -16,6 +16,8 @@ export default function StoryTree() {
     const [hasSavedRootScene, setHasSavedRootScene] = useState(false);
     const [activeParent, setActiveParent] = useState(null);
     const [currentSceneId, setCurrentSceneId] = useState(null);
+    const [linkCtx, setLinkCtx] = useState(null);
+    const [linkTargetId, setLinkTargetId] = useState("");
 
     const [storyData, setStoryData] = useState({
         scenes: {},
@@ -36,6 +38,8 @@ export default function StoryTree() {
     const AUTOSAVE_KEY = "tbg_storyData_v1";
     const saveDebounceRef = useRef();
     const fileInputRef = useRef(null);
+
+    const allSceneIds = useMemo(() => Object.keys(storyData?.scenes || {}), [storyData?.scenes]);
 
     function buildPuzzleFromState() {
         const hintsArr = (puzzle.hintsText || "")
@@ -796,7 +800,12 @@ export default function StoryTree() {
                                 {scene.choices.map((choice, idx) => (
                                     <li key={idx}>
                                         <i>{choice.text}</i> → {choice.outcome.slice(0, 40)}...
-                                        {!choice.nextSceneId ? (
+                                        {!choice.nextSceneId &&
+                                        !(
+                                            linkCtx &&
+                                            linkCtx.sceneId === scene.id &&
+                                            linkCtx.choiceIdx === idx
+                                        ) ? (
                                             <button
                                                 className="expand-branch-btn"
                                                 onClick={() => handleExpandBranch(scene.id, idx)}
@@ -809,6 +818,117 @@ export default function StoryTree() {
                                                 → {choice.nextSceneId}
                                             </span>
                                         )}
+                                        <button
+                                            className="edit-btn"
+                                            type="button"
+                                            onClick={() => {
+                                                if (!allSceneIds.length) {
+                                                    toast("No saved scenes yet to link.");
+                                                    return;
+                                                }
+                                                setLinkCtx({ sceneId: scene.id, choiceIdx: idx });
+                                                setLinkTargetId(
+                                                    choice.nextSceneId || allSceneIds[0]
+                                                );
+                                            }}
+                                            title="Link this choice to an existing scene"
+                                        >
+                                            🔗 Link Existing
+                                        </button>
+                                        {linkCtx &&
+                                            linkCtx.sceneId === scene.id &&
+                                            linkCtx.choiceIdx === idx && (
+                                                <div
+                                                    style={{
+                                                        display: "flex",
+                                                        gap: ".5rem",
+                                                        alignItems: "center",
+                                                        marginTop: ".5rem",
+                                                    }}
+                                                >
+                                                    <select
+                                                        value={linkTargetId}
+                                                        onChange={(e) =>
+                                                            setLinkTargetId(e.target.value)
+                                                        }
+                                                        style={{
+                                                            padding: ".45rem .6rem",
+                                                            borderRadius: 8,
+                                                        }}
+                                                    >
+                                                        {allSceneIds
+                                                            .filter((sid) => sid !== currentSceneId)
+                                                            .map((sid) => (
+                                                                <option key={sid} value={sid}>
+                                                                    {sid}
+                                                                </option>
+                                                            ))}
+                                                    </select>
+
+                                                    <button
+                                                        className="save-scene-btn"
+                                                        type="button"
+                                                        onClick={() => {
+                                                            if (!linkTargetId) return;
+                                                            setStoryData((prev) => {
+                                                                const s = prev.scenes[scene.id];
+                                                                if (!s) return prev;
+                                                                const updated = {
+                                                                    ...prev,
+                                                                    scenes: {
+                                                                        ...prev.scenes,
+                                                                        [scene.id]: {
+                                                                            ...s,
+                                                                            choices: s.choices.map(
+                                                                                (c, i) =>
+                                                                                    i === idx
+                                                                                        ? {
+                                                                                              ...c,
+                                                                                              nextSceneId:
+                                                                                                  linkTargetId,
+                                                                                          }
+                                                                                        : c
+                                                                            ),
+                                                                        },
+                                                                    },
+                                                                };
+                                                                return updated;
+                                                            });
+                                                            if (currentSceneId === scene.id) {
+                                                                setChoices((prev) =>
+                                                                    prev.map((c, i) =>
+                                                                        i === idx
+                                                                            ? {
+                                                                                  ...c,
+                                                                                  nextSceneId:
+                                                                                      linkTargetId,
+                                                                              }
+                                                                            : c
+                                                                    )
+                                                                );
+                                                            }
+                                                            toast.success(
+                                                                `Linked to ${linkTargetId}`
+                                                            );
+                                                            setLinkCtx(null);
+                                                            setLinkTargetId("");
+                                                        }}
+                                                    >
+                                                        Link
+                                                    </button>
+
+                                                    <button
+                                                        className="remove-btn"
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setLinkCtx(null);
+                                                            setLinkTargetId("");
+                                                        }}
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                </div>
+                                            )}
                                     </li>
                                 ))}
                             </ul>
