@@ -25,6 +25,7 @@ export default function StoryTree() {
     });
 
     const [sceneType, setSceneType] = useState("narrative");
+    const isPuzzleEditor = sceneType === "puzzle";
 
     const [puzzle, setPuzzle] = useState({
         prompt: "",
@@ -422,7 +423,7 @@ export default function StoryTree() {
 
                     <div className="intro-block">
                         <h2>Scene Narrative</h2>
-                        {activeParent && (
+                        {isPuzzleEditor && activeParent && (
                             <button
                                 className="ai-suggest-narrative-btn"
                                 style={{ marginBottom: "0.5rem" }}
@@ -585,7 +586,7 @@ export default function StoryTree() {
                                     <input
                                         type="text"
                                         className="puzzle-input"
-                                        placeholder='successNextSceneId (e.g., "scene-pass")'
+                                        placeholder='successNextSceneId (e.g., "scene-x")'
                                         value={puzzle.successNextSceneId}
                                         onChange={(e) =>
                                             setPuzzle({
@@ -597,7 +598,7 @@ export default function StoryTree() {
                                     <input
                                         type="text"
                                         className="puzzle-input"
-                                        placeholder='failNextSceneId (e.g., "scene-fail")'
+                                        placeholder='failNextSceneId (e.g., "scene-x")'
                                         value={puzzle.failNextSceneId}
                                         onChange={(e) =>
                                             setPuzzle({
@@ -611,132 +612,147 @@ export default function StoryTree() {
                         </div>
                     )}
 
-                    <div className="choice-list">
-                        <h3>Add Choices for This Scene</h3>
-                        {choices.map((choice, idx) => (
-                            <div
-                                className="choice-item"
-                                key={choice.id}
-                                style={{ flexDirection: "column", alignItems: "stretch" }}
-                            >
-                                <div style={{ display: "flex", alignItems: "center" }}>
-                                    <input
-                                        type="text"
-                                        value={choice.text}
-                                        placeholder={`Choice #${idx + 1}`}
+                    {isPuzzleEditor && (
+                        <div
+                            className="choice-list"
+                            style={{ marginTop: "0.75rem", opacity: 0.85 }}
+                        >
+                            <h3>Choices</h3>
+                            <p style={{ margin: 0 }}>
+                                Choices are disabled for puzzle scenes. The puzzle input replaces
+                                choices in Play mode.
+                            </p>
+                        </div>
+                    )}
+
+                    {!isPuzzleEditor && (
+                        <div className="choice-list">
+                            <h3>Add Choices for This Scene</h3>
+
+                            {choices.map((choice, idx) => (
+                                <div
+                                    className="choice-item"
+                                    key={choice.id}
+                                    style={{ flexDirection: "column", alignItems: "stretch" }}
+                                >
+                                    <div style={{ display: "flex", alignItems: "center" }}>
+                                        <input
+                                            type="text"
+                                            value={choice.text}
+                                            placeholder={`Choice #${idx + 1}`}
+                                            onChange={(e) => {
+                                                const updated = [...choices];
+                                                updated[idx].text = e.target.value;
+                                                setChoices(updated);
+                                            }}
+                                            style={{ flex: 1, marginRight: 8 }}
+                                        />
+                                        <button
+                                            className="remove-btn"
+                                            onClick={() => {
+                                                setChoices(choices.filter((c, i) => i !== idx));
+                                            }}
+                                            disabled={choices.length <= 1 || !!choice.nextSceneId}
+                                            title={
+                                                choice.nextSceneId
+                                                    ? "Cannot remove: this choice links to " +
+                                                      choice.nextSceneId
+                                                    : ""
+                                            }
+                                        >
+                                            Remove
+                                        </button>
+                                    </div>
+                                    <textarea
+                                        value={choice.outcome}
+                                        placeholder="Describe what happens for this choice..."
                                         onChange={(e) => {
                                             const updated = [...choices];
-                                            updated[idx].text = e.target.value;
+                                            updated[idx].outcome = e.target.value;
                                             setChoices(updated);
                                         }}
-                                        style={{ flex: 1, marginRight: 8 }}
+                                        rows={2}
+                                        style={{ marginTop: 8, width: "100%" }}
                                     />
-                                    <button
-                                        className="remove-btn"
-                                        onClick={() => {
-                                            setChoices(choices.filter((c, i) => i !== idx));
-                                        }}
-                                        disabled={choices.length <= 1 || !!choice.nextSceneId}
-                                        title={
-                                            choice.nextSceneId
-                                                ? "Cannot remove: this choice links to " +
-                                                  choice.nextSceneId
-                                                : ""
-                                        }
-                                    >
-                                        Remove
-                                    </button>
                                 </div>
-                                <textarea
-                                    value={choice.outcome}
-                                    placeholder="Describe what happens for this choice..."
-                                    onChange={(e) => {
-                                        const updated = [...choices];
-                                        updated[idx].outcome = e.target.value;
-                                        setChoices(updated);
-                                    }}
-                                    rows={2}
-                                    style={{ marginTop: 8, width: "100%" }}
-                                />
-                            </div>
-                        ))}
+                            ))}
 
-                        <div className="storytree-actions">
-                            <button
-                                className="add-choice-btn"
-                                onClick={() =>
-                                    setChoices([
-                                        ...choices,
-                                        {
-                                            id: Date.now(),
-                                            text: "",
-                                            outcome: "",
-                                            nextSceneId: null,
-                                        },
-                                    ])
-                                }
-                            >
-                                + Add Choice
-                            </button>
-
-                            <button
-                                className="ai-assist-btn"
-                                onClick={async () => {
-                                    const choiceTexts = choices
-                                        .filter((c) => c.text.trim())
-                                        .map((c) => c.text);
-
-                                    if (!sceneIntro || choiceTexts.length === 0) {
-                                        toast.error(
-                                            "Please enter the scene narrative and at least one choice."
-                                        );
-                                        return;
+                            <div className="storytree-actions">
+                                <button
+                                    className="add-choice-btn"
+                                    onClick={() =>
+                                        setChoices([
+                                            ...choices,
+                                            {
+                                                id: Date.now(),
+                                                text: "",
+                                                outcome: "",
+                                                nextSceneId: null,
+                                            },
+                                        ])
                                     }
+                                >
+                                    + Add Choice
+                                </button>
 
-                                    await toast.promise(
-                                        fetch(`${API_BASE}/generate-outcomes`, {
-                                            method: "POST",
-                                            headers: { "Content-Type": "application/json" },
-                                            body: JSON.stringify({
-                                                scene: sceneIntro,
-                                                choices: choiceTexts,
-                                            }),
-                                        })
-                                            .then((res) => {
-                                                if (!res.ok) throw new Error("Server error");
-                                                return res.json();
-                                            })
-                                            .then((data) => {
-                                                if (!data || !Array.isArray(data.outcomes)) {
-                                                    throw new Error("No outcomes returned");
-                                                }
-                                                setChoices((prev) =>
-                                                    prev.map((choice, idx) => ({
-                                                        ...choice,
-                                                        outcome:
-                                                            data.outcomes[idx] ?? choice.outcome,
-                                                    }))
-                                                );
-                                            }),
-                                        {
-                                            loading: "Generating outcomes…",
-                                            success: "Outcomes generated!",
-                                            error: "Failed to generate outcomes.",
+                                <button
+                                    className="ai-assist-btn"
+                                    onClick={async () => {
+                                        const choiceTexts = choices
+                                            .filter((c) => c.text.trim())
+                                            .map((c) => c.text);
+
+                                        if (!sceneIntro || choiceTexts.length === 0) {
+                                            toast.error(
+                                                "Please enter the scene narrative and at least one choice."
+                                            );
+                                            return;
                                         }
-                                    );
-                                }}
-                            >
-                                🪄 AI Assist: Generate Outcomes
-                            </button>
 
-                            <button
-                                className="save-scene-btn"
-                                style={{ marginTop: "1.5rem" }}
-                                onClick={handleSaveScene}
-                            >
-                                💾 Save Scene
-                            </button>
+                                        await toast.promise(
+                                            fetch(`${API_BASE}/generate-outcomes`, {
+                                                method: "POST",
+                                                headers: { "Content-Type": "application/json" },
+                                                body: JSON.stringify({
+                                                    scene: sceneIntro,
+                                                    choices: choiceTexts,
+                                                }),
+                                            })
+                                                .then((res) => {
+                                                    if (!res.ok) throw new Error("Server error");
+                                                    return res.json();
+                                                })
+                                                .then((data) => {
+                                                    if (!data || !Array.isArray(data.outcomes)) {
+                                                        throw new Error("No outcomes returned");
+                                                    }
+                                                    setChoices((prev) =>
+                                                        prev.map((choice, idx) => ({
+                                                            ...choice,
+                                                            outcome:
+                                                                data.outcomes[idx] ??
+                                                                choice.outcome,
+                                                        }))
+                                                    );
+                                                }),
+                                            {
+                                                loading: "Generating outcomes…",
+                                                success: "Outcomes generated!",
+                                                error: "Failed to generate outcomes.",
+                                            }
+                                        );
+                                    }}
+                                >
+                                    🪄 AI Assist: Generate Outcomes
+                                </button>
+                            </div>
                         </div>
+                    )}
+
+                    <div className="storytree-actions" style={{ marginTop: "1rem" }}>
+                        <button className="save-scene-btn" onClick={handleSaveScene}>
+                            💾 Save Scene
+                        </button>
                     </div>
                 </>
             ) : (
