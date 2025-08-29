@@ -72,3 +72,22 @@
     color: #fff;
     line-height: 1.4;
 }
+
+.btn-primary {
+    display: inline-block;
+    background: linear-gradient(90deg, #2eaadc 0%, #4364f7 100%);
+    color: #fff;
+    font-weight: 700;
+    font-size: 1.1rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 10px;
+    text-decoration: none;
+    text-align: center;
+    transition: filter 0.2s ease, transform 0.15s ease;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+    margin-top: 1rem;
+}
+.btn-primary:hover {
+    filter: brightness(1.08);
+    transform: translateY(-1px);
+}

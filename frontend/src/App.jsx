@@ -5,6 +5,7 @@ import Form from "./pages/Form";
 import NotFound from "./pages/NotFound";
 import StoryTree from "./pages/StoryTree";
 import Play from "./pages/Play";
+import PublicPlay from "./pages/PublicPlay";
 
 function App() {
     return (
@@ -13,6 +14,7 @@ function App() {
             <Route path="/form" element={<Form />} />
             <Route path="/story-tree" element={<StoryTree />} />
             <Route path="/play" element={<Play />} />
+            <Route path="/public-play" element={<PublicPlay />} />
             <Route path="*" element={<NotFound />} />
         </Routes>
     );

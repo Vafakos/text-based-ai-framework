@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router";
+import { useNavigate, Link } from "react-router";
 import "../styles/Home.css";
 
 export default function Home() {
@@ -12,6 +12,9 @@ export default function Home() {
                     <p>Craft your experience, share your stories.</p>
                 </div>
                 <button onClick={() => navigate("/form")}>Create your adventure</button>
+                <Link className="btn-primary" to="/public-play">
+                    Play a Story
+                </Link>
             </section>
 
             <section className="description">

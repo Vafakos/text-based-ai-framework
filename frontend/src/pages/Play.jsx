@@ -6,6 +6,8 @@ export default function Play() {
     const location = useLocation();
     const navigate = useNavigate();
 
+    const isPublic = !!location.state?.public;
+
     const storyData =
         location.state?.storyData ||
         (() => {
@@ -243,9 +245,14 @@ export default function Play() {
                         >
                             ← Back
                         </button>
-                        <button className="add-choice-btn" onClick={() => navigate("/story-tree")}>
-                            ✏️ Back to Editor
-                        </button>
+                        {!isPublic && (
+                            <button
+                                className="add-choice-btn"
+                                onClick={() => navigate("/story-tree")}
+                            >
+                                ✏️ Back to Editor
+                            </button>
+                        )}
                     </div>
                 </>
             ) : (
@@ -256,7 +263,7 @@ export default function Play() {
                         totalScenes,
                     }}
                     onRestart={restart}
-                    onEdit={() => navigate("/story-tree")}
+                    onEdit={!isPublic ? () => navigate("/story-tree") : null}
                 />
             )}
         </div>
@@ -308,9 +315,11 @@ function EndingScreen({ stats, onRestart, onEdit }) {
                 <button className="save-scene-btn" onClick={onRestart}>
                     ↺ Play Again
                 </button>
-                <button className="add-choice-btn" onClick={onEdit}>
-                    ✏️ Back to Editor
-                </button>
+                {onEdit && (
+                    <button className="add-choice-btn" onClick={onEdit}>
+                        ✏️ Back to Editor
+                    </button>
+                )}
             </div>
         </div>
     );
