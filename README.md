@@ -191,7 +191,7 @@ Computer Science Student, Ionian University
 
 -   🔗 **GitHub**: [@Vafakos](https://github.com/Vafakos)
 -   📧 **Contact**: [Through GitHub issues](https://github.com/Vafakos/text-based-ai-framework/issues)
--   🎥 **Video Demo**: Coming soon on YouTube
+-   🎥 **Video Demo**: [Εργασία Πτυχιακή - Ανάπτυξη Παιχνιδιού Βασισμένου σε Κείμενο με Χρήση Generative AI](https://www.youtube.com/watch?v=Dhn5cW0bfFw)
 
 ---
 
