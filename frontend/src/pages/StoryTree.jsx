@@ -423,7 +423,7 @@ export default function StoryTree() {
 
                     <div className="intro-block">
                         <h2>Scene Narrative</h2>
-                        {isPuzzleEditor && activeParent && (
+                        {!isPuzzleEditor && activeParent && (
                             <button
                                 className="ai-suggest-narrative-btn"
                                 style={{ marginBottom: "0.5rem" }}
